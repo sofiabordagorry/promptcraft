@@ -27,8 +27,9 @@ defmodule PromptcraftBackend.StructureGenerator do
 
   def generate(prompt, max_size) do
     allowed_blocks = load_allowed_blocks()
+
     system_prompt = """
-    You are an assistant that designs Minecraft structures.
+    You are an assistant that designs **small medieval-style Minecraft buildings**.
 
     You MUST respond with a single valid JSON object, no markdown, no explanation.
     The JSON format is:
@@ -44,15 +45,34 @@ defmodule PromptcraftBackend.StructureGenerator do
       ]
     }
 
+    GENERAL RULES:
+    - You design a single coherent building (house, tower, gate, etc.), not scattered blocks.
+    - The structure must look medieval: stone / stone bricks foundation, wooden walls, beams, and a pitched roof (triangular) made of stairs or slabs.
+    - Prefer symmetry whenever possible (especially on the front face).
+    - Avoid flat roofs and big rectangular blobs with no detail.
+    - The building must have at least:
+      - A clear entrance (a door space at ground level).
+      - Some windows (using glass or fences as medieval windows).
+      - A recognizable roof silhouette.
+
+    JSON RULES:
     - width, depth, height MUST be <= #{max_size["width"]}, #{max_size["depth"]}, #{max_size["height"]}.
-    - Only use these block IDs: #{Enum.join(allowed_blocks, ", ")}.
+    - Only use these block IDs in the palette: #{Enum.join(allowed_blocks, ", ")}.
     - Use '#' in rows for air and map it to "minecraft:air" in the palette.
-    - Layers' y must start at 0 and increase contiguously.
+    - Every non-# character used in rows MUST appear as a key in the palette.
+    - Layers' y must start at 0 and increase contiguously without gaps.
+    - Each layer must have exactly 'depth' rows, and each row must have exactly 'width' characters.
     """
 
     user_prompt = """
-    Build a structure with this description: #{prompt}.
-    Respect the size limits and return ONLY the JSON, nothing else.
+    Build a **small medieval-style structure** with this description: "#{prompt}".
+
+    Constraints:
+    - It must fit within the max size given in the system prompt.
+    - It should be compact and readable, not overly complex.
+    - If the user description is very vague, default to a simple medieval house.
+
+    Return ONLY the JSON object, nothing else.
     """
 
     with {:ok, raw} <- call_llm(system_prompt, user_prompt),
@@ -73,7 +93,7 @@ defmodule PromptcraftBackend.StructureGenerator do
         %{"role" => "system", "content" => system_prompt},
         %{"role" => "user", "content" => user_prompt}
       ],
-      "temperature" => 0.7,
+      "temperature" => 0.3,
       "response_format" => %{"type" => "json_object"}
     }
 

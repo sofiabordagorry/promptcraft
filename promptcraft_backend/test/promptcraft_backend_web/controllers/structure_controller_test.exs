@@ -9,7 +9,6 @@ defmodule PromptcraftBackendWeb.StructureControllerTest do
     end
 
     test "accepts prompt and max_size parameters", %{conn: conn} do
-
       params = %{
         "prompt" => "a small house",
         "max_size" => %{"width" => 10, "depth" => 10, "height" => 5}

@@ -9,7 +9,8 @@ defmodule PromptcraftBackend.Application do
   def start(_type, _args) do
     children = [
       PromptcraftBackendWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:promptcraft_backend, :dns_cluster_query) || :ignore},
+      {DNSCluster,
+       query: Application.get_env(:promptcraft_backend, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: PromptcraftBackend.PubSub},
       # Start a worker by calling: PromptcraftBackend.Worker.start_link(arg)
       # {PromptcraftBackend.Worker, arg},
