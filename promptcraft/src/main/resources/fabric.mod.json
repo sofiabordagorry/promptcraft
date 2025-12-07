@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "promptcraft",
 	"version": "${version}",
-	"name": "PromptCraft",
+	"name": "Promptcraft",
 	"description": "A Fabric mod that integrates Minecraft with a Large Language Model. Use /askAI to describe a structure and receive a special block that generates it in the world.",
 	"authors": [
 		"Sofía Bordagorry"

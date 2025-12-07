@@ -1,8 +1,8 @@
-# PromptCraft
+# Promptcraft
 
 AI-powered Minecraft structure generation from natural language descriptions.
 
-PromptCraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoenix backend powered by LLMs. Players describe structures using the `/askAI` command, receive a special builder block, and place it in the world to automatically generate the structure.
+Promptcraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoenix backend powered by LLMs. Players describe structures using the `/askAI` command, receive a special builder block, and place it in the world to automatically generate the structure.
 
 ## Features
 
@@ -16,8 +16,8 @@ PromptCraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoeni
 ## Project Structure
 
 ```
-PromptCraft/
-├── PromptCraft/                    # Fabric mod (Minecraft Java)
+Promptcraft/
+├── Promptcraft/                    # Fabric mod (Minecraft Java)
 │   ├── src/main/java/com/example/
 │   │   ├── ExampleMod.java         # Main mod + /askAI command
 │   │   ├── AIBuildingBlock.java   # Builder block logic
@@ -74,7 +74,7 @@ mix phx.server
 ### Mod Setup
 
 ```bash
-cd PromptCraft
+cd Promptcraft
 
 # Build mod
 .\gradlew.bat build
@@ -123,7 +123,7 @@ Restart the backend after changes.
 
 The backend runs on `http://localhost:4000` by default. To change:
 
-Edit `PromptCraft/src/main/java/com/example/http/BackendClient.java`:
+Edit `Promptcraft/src/main/java/com/example/http/BackendClient.java`:
 
 ```java
 private static final String BACKEND_URL = "http://localhost:4000/api/generate";
@@ -182,7 +182,7 @@ mix test --exclude integration
 mix test --include integration
 
 # Mod build
-cd PromptCraft
+cd Promptcraft
 .\gradlew.bat build
 ```
 
@@ -199,36 +199,4 @@ cd PromptCraft
 - StructureGenerator calls OpenAI API with structured prompt
 - Returns JSON structure definition
 - Configurable block list from text file
-
-## Troubleshooting
-
-### "Error: Backend error: 500"
-
-Backend is not running or crashed. Check backend terminal for errors.
-
-### "Error: OPENAI_API_KEY not set"
-
-Configure the environment variable before starting the backend:
-```powershell
-$env:OPENAI_API_KEY="your-key"
-```
-
-### "Structure not found" in-game
-
-The structure UUID is missing or invalid. This happens if:
-- Backend crashed after generating
-- Server restart cleared the registry
-- Block was obtained without using `/askAI`
-
-### Blocks floating one block above ground
-
-This is a known issue with layer Y-coordinate interpretation. The prompt has been updated to clarify that y=0 is ground level.
-
-## License
-
-CC0-1.0
-
-## Authors
-
-Sofia Bordagorry
 

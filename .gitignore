@@ -25,7 +25,7 @@ bin/
 .DS_Store
 
 # Minecraft run directory
-PromptCraft/run/
+Promptcraft/run/
 
 # Compiled class files
 *.class

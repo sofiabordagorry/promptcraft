@@ -24,7 +24,7 @@ public class ExampleMod implements ModInitializer {
     @Override
     public void onInitialize() {
 
-        LOGGER.info("Initializing PromptCraft...");
+        LOGGER.info("Initializing Promptcraft...");
 
         // Custom block
         ModBlocks.register();
@@ -71,6 +71,6 @@ public class ExampleMod implements ModInitializer {
             );
         });
 
-        LOGGER.info("PromptCraft initialized!");
+        LOGGER.info("Promptcraft initialized!");
     }
 }
