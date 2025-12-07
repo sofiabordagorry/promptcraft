@@ -1,17 +1,32 @@
 defmodule PromptcraftBackend.StructureGenerator do
   @moduledoc false
 
-  @allowed_blocks [
-    "minecraft:cobblestone",
-    "minecraft:oak_planks",
-    "minecraft:stone_bricks",
-    "minecraft:glass",
-    "minecraft:oak_log",
-    "minecraft:oak_leaves",
-    "minecraft:air"
-  ]
+  @allowed_blocks_file "priv/allowed_blocks.txt"
+
+  defp load_allowed_blocks do
+    case File.read(@allowed_blocks_file) do
+      {:ok, content} ->
+        content
+        |> String.split("\n", trim: true)
+        |> Enum.map(&String.trim/1)
+        |> Enum.reject(&String.starts_with?(&1, "#"))
+        |> Enum.reject(&(&1 == ""))
+
+      {:error, _} ->
+        [
+          "minecraft:cobblestone",
+          "minecraft:oak_planks",
+          "minecraft:stone_bricks",
+          "minecraft:glass",
+          "minecraft:oak_log",
+          "minecraft:oak_leaves",
+          "minecraft:air"
+        ]
+    end
+  end
 
   def generate(prompt, max_size) do
+    allowed_blocks = load_allowed_blocks()
     system_prompt = """
     You are an assistant that designs Minecraft structures.
 
@@ -29,10 +44,13 @@ defmodule PromptcraftBackend.StructureGenerator do
       ]
     }
 
+    IMPORTANT RULES:
     - width, depth, height MUST be <= #{max_size["width"]}, #{max_size["depth"]}, #{max_size["height"]}.
-    - Only use these block IDs: #{Enum.join(@allowed_blocks, ", ")}.
+    - Only use these block IDs: #{Enum.join(allowed_blocks, ", ")}.
     - Use '#' in rows for air and map it to "minecraft:air" in the palette.
-    - Layers' y must start at 0 and increase contiguously.
+    - Layers MUST start at y=0 (ground level) and increase sequentially (0, 1, 2, 3...).
+    - y=0 is the FIRST layer of blocks touching the ground, NOT floating in the air.
+    - Every layer from y=0 to y=height-1 must be included.
     """
 
     user_prompt = """
@@ -53,7 +71,7 @@ defmodule PromptcraftBackend.StructureGenerator do
     api_key = System.fetch_env!("OPENAI_API_KEY")
 
     body = %{
-      "model" => "gpt-4o-mini",
+      "model" => "gpt-5.1",
       "messages" => [
         %{"role" => "system", "content" => system_prompt},
         %{"role" => "user", "content" => user_prompt}
