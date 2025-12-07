@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +15,12 @@ public class ExampleMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+
+        LOGGER.info("Initializing PromptCraft...");
+
+        // Custom block
+        ModBlocks.register();
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
                     Commands.literal("hellosofi")
@@ -28,5 +33,7 @@ public class ExampleMod implements ModInitializer {
                             })
             );
         });
+
+        LOGGER.info("PromptCraft initialized!");
     }
 }
