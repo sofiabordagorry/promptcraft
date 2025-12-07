@@ -36,3 +36,18 @@ PromptCraft/run/
 # Fabric/Loom cache
 .fabric/
 remappedSrc/
+
+# Elixir / Phoenix
+promptcraft_backend/_build/
+promptcraft_backend/deps/
+promptcraft_backend/*.ez
+promptcraft_backend/.fetch
+promptcraft_backend/erl_crash.dump
+promptcraft_backend/*.beam
+promptcraft_backend/config/*.secret.exs
+promptcraft_backend/.elixir_ls/
+promptcraft_backend/priv/static/
+
+# Environment variables
+promptcraft_backend/.env
+.env
