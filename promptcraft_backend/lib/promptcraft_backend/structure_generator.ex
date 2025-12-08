@@ -149,6 +149,12 @@ defmodule PromptcraftBackend.StructureGenerator do
     • **palette**: Every character used in rows MUST have an entry in palette
       - '#' MUST always map to "minecraft:air"
       - Only use these blocks: #{Enum.join(allowed_blocks, ", ")}
+      - BLOCK STATES: You can specify block properties using [property=value] syntax
+        Examples:
+        * "R": "minecraft:oak_stairs[facing=north,half=bottom]"
+        * "T": "minecraft:oak_stairs[facing=south,half=top]"
+        * "S": "minecraft:oak_slab[type=bottom]"
+        Common properties: facing (north/south/east/west), half (top/bottom), type (top/bottom/double)
     • **layers**:
       - Start at y=0 (ground) and increment by 1 each layer
       - Each layer MUST have exactly 'depth' rows

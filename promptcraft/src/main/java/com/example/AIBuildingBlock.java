@@ -236,11 +236,91 @@ public class AIBuildingBlock extends Block {
 
     private BlockState getBlockState(String blockId) {
         try {
-            ResourceLocation location = ResourceLocation.parse(blockId);
+            String blockIdBase = blockId;
+            Map<String, String> properties = new HashMap<>();
+            
+            if (blockId.contains("[") && blockId.endsWith("]")) {
+                int bracketIndex = blockId.indexOf('[');
+                blockIdBase = blockId.substring(0, bracketIndex);
+                String propertiesStr = blockId.substring(bracketIndex + 1, blockId.length() - 1);
+                
+                if (!propertiesStr.isEmpty()) {
+                    for (String prop : propertiesStr.split(",")) {
+                        String[] parts = prop.split("=", 2); // Limit to 2 parts in case value contains '='
+                        if (parts.length == 2) {
+                            String key = parts[0].trim();
+                            String value = parts[1].trim();
+                            if (!key.isEmpty() && !value.isEmpty()) {
+                                properties.put(key, value);
+                            }
+                        } else {
+                            ExampleMod.LOGGER.warn("Invalid property format in '{}': '{}'", blockId, prop);
+                        }
+                    }
+                }
+            }
+            
+            ResourceLocation location = ResourceLocation.parse(blockIdBase);
             Block block = BuiltInRegistries.BLOCK.get(location);
-            return block != null ? block.defaultBlockState() : null;
+            
+            if (block == null) {
+                ExampleMod.LOGGER.warn("Block not found: {}", blockIdBase);
+                return null;
+            }
+            
+            BlockState state = block.defaultBlockState();
+            
+            // Apply properties to the block state
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
+                BlockState newState = applyProperty(state, entry.getKey(), entry.getValue());
+                if (newState == state) {
+                    ExampleMod.LOGGER.warn("Property {}={} could not be applied to {}", 
+                        entry.getKey(), entry.getValue(), blockIdBase);
+                }
+                state = newState;
+            }
+            
+            return state;
         } catch (Exception e) {
+            ExampleMod.LOGGER.error("Error parsing block state: {}", blockId, e);
             return null;
         }
+    }
+    
+    private BlockState applyProperty(BlockState state, String propertyName, String value) {
+        if (propertyName == null || value == null || propertyName.isEmpty() || value.isEmpty()) {
+            return state;
+        }
+        
+        try {
+            // Find the property by name
+            for (net.minecraft.world.level.block.state.properties.Property<?> property : state.getProperties()) {
+                if (property.getName().equals(propertyName)) {
+                    return setPropertyValue(state, property, value);
+                }
+            }
+            ExampleMod.LOGGER.debug("Property '{}' not found for block {} (available: {})", 
+                propertyName, state.getBlock(), state.getProperties().stream()
+                    .map(p -> p.getName()).toList());
+        } catch (Exception e) {
+            ExampleMod.LOGGER.error("Error applying property {}={} to {}", propertyName, value, state.getBlock(), e);
+        }
+        return state;
+    }
+    
+    private <T extends Comparable<T>> BlockState setPropertyValue(BlockState state, 
+            net.minecraft.world.level.block.state.properties.Property<T> property, String value) {
+        try {
+            java.util.Optional<T> parsedValue = property.getValue(value);
+            if (parsedValue.isPresent()) {
+                return state.setValue(property, parsedValue.get());
+            } else {
+                ExampleMod.LOGGER.warn("Invalid value '{}' for property '{}' on block {} (valid: {})", 
+                    value, property.getName(), state.getBlock(), property.getPossibleValues());
+            }
+        } catch (Exception e) {
+            ExampleMod.LOGGER.error("Error setting property {}={} on {}", property.getName(), value, state.getBlock(), e);
+        }
+        return state;
     }
 }
