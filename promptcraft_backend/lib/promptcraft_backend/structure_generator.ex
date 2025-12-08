@@ -2,6 +2,7 @@ defmodule PromptcraftBackend.StructureGenerator do
   @moduledoc false
 
   @allowed_blocks_file "priv/allowed_blocks.txt"
+  @examples_dir "priv/examples/medieval"
 
   defp load_allowed_blocks do
     case File.read(@allowed_blocks_file) do
@@ -25,57 +26,193 @@ defmodule PromptcraftBackend.StructureGenerator do
     end
   end
 
+  defp load_examples do
+    case File.ls(@examples_dir) do
+      {:ok, files} ->
+        files
+        |> Enum.filter(&String.ends_with?(&1, ".json"))
+        |> Enum.map(fn file ->
+          path = Path.join(@examples_dir, file)
+          {:ok, content} = File.read(path)
+          Jason.decode!(content)
+        end)
+
+      {:error, _} ->
+        []
+    end
+  end
+
+  defp pick_examples(n \\ 2) do
+    load_examples()
+    |> Enum.shuffle()
+    |> Enum.take(n)
+  end
+
+  defp build_example_messages(examples) do
+    Enum.flat_map(examples, fn %{"description" => desc, "structure" => structure} ->
+      [
+        %{
+          "role" => "user",
+          "content" => "Example request: \"#{desc}\"\n\nGenerate the structure JSON."
+        },
+        %{
+          "role" => "assistant",
+          "content" => Jason.encode!(structure)
+        }
+      ]
+    end)
+  end
+
   def generate(prompt, max_size) do
     allowed_blocks = load_allowed_blocks()
+    examples = pick_examples(2)
 
     system_prompt = """
-    You are an assistant that designs **small medieval-style Minecraft buildings**.
+    You are an expert Minecraft builder specializing in creating authentic, beautiful medieval structures.
 
-    You MUST respond with a single valid JSON object, no markdown, no explanation.
-    The JSON format is:
+    YOUR TASK: Generate a complete 3D voxel structure as a JSON object.
+
+    ═══════════════════════════════════════════════════════════════════════════════
+    MINECRAFT BUILDING FUNDAMENTALS
+    ═══════════════════════════════════════════════════════════════════════════════
+
+    PHYSICS & CONSTRUCTION RULES:
+    • Gravity: Sand, gravel, concrete_powder fall if unsupported. Avoid using them mid-air.
+    • Support: Most blocks need support below them. Avoid large floating structures.
+    • Water: Flows and spreads. Use carefully or not at all in structures.
+    • Ground Level: Y=0 is the BOTTOM of your structure (foundation level).
+
+    MEDIEVAL ARCHITECTURE PRINCIPLES:
+    • **Foundation (Y=0)**: Always solid stone, cobblestone, or stone_bricks
+    • **Walls (Y=1 to Y=height-2)**: Oak/spruce planks with oak_log corner posts
+    • **Roof (top 1-2 layers)**: MUST be sloped/pitched using stairs, never flat
+    • **Symmetry**: Front face should be symmetric (left mirrors right)
+    • **Scale**: Small buildings (5x5 to 7x7), not massive castles
+    • **Details**: Include windows (glass_pane), door, maybe decorative elements
+
+    COMMON BUILDING PATTERNS:
+    • Corner posts: Use oak_log or spruce_log at all 4 corners of each wall layer
+    • Windows: Glass blocks or glass_pane, placed symmetrically
+    • Doors: Oak_door at ground level (Y=1), creates 2-block tall opening automatically
+    • Roof: Use oak_stairs or stone_brick_stairs in triangular/pyramid pattern
+    • Interior: Mostly hollow (air) with minimal furniture against walls
+
+    MULTIBLOCK STRUCTURES (CRITICAL):
+    • **Doors**: Automatically create 2-block tall structure (Y and Y+1)
+      - Only place door at Y=1, do NOT place anything at Y=2 in same X,Z position
+    • **Beds**: Automatically create 2-block wide structure (X and X+1)
+      - Only place bed once, do NOT place block at adjacent X position
+
+    ═══════════════════════════════════════════════════════════════════════════════
+    JSON OUTPUT FORMAT
+    ═══════════════════════════════════════════════════════════════════════════════
+
+    You MUST output a valid JSON object with this EXACT structure:
 
     {
-      "palette": { "A": "minecraft:block_id", "B": "minecraft:block_id", "#": "minecraft:air", ... },
-      "size": { "width": int, "depth": int, "height": int },
+      "palette": {
+        "<char>": "minecraft:<block_id>",
+        "<char>": "minecraft:<block_id>",
+        "#": "minecraft:air"
+      },
+      "size": {"width": <int>, "depth": <int>, "height": <int>},
       "layers": [
-        {
-          "y": int,
-          "rows": [ "string_of_length_width", "..." ]  // exactly 'depth' rows
-        }
+        {"y": <int>, "rows": ["<string>", "<string>", ...]},
+        {"y": <int>, "rows": ["<string>", "<string>", ...]},
+        ...
       ]
     }
 
-    GENERAL RULES:
-    - You design a single coherent building (house, tower, gate, etc.), not scattered blocks.
-    - The structure must look medieval: stone / stone bricks foundation, wooden walls, beams, and a pitched roof (triangular) made of stairs or slabs.
-    - Prefer symmetry whenever possible (especially on the front face).
-    - Avoid flat roofs and big rectangular blobs with no detail.
-    - The building must have at least:
-      - A clear entrance (a door space at ground level).
-      - Some windows (using glass or fences as medieval windows).
-      - A recognizable roof silhouette.
+    EXAMPLE (7x7x5 medieval house - for FORMAT reference only, create your own structure):
+    {
+      "palette": {
+        "S": "minecraft:stone_bricks",
+        "W": "minecraft:oak_planks",
+        "L": "minecraft:oak_log",
+        "D": "minecraft:oak_door",
+        "G": "minecraft:glass_pane",
+        "R": "minecraft:oak_stairs",
+        "#": "minecraft:air"
+      },
+      "size": {"width": 7, "depth": 7, "height": 5},
+      "layers": [
+        {"y": 0, "rows": ["SSSSSSS", "SWWWWWS", "SWWDWWS", "SWWWWWS", "SWWWWWS", "SWWWWWS", "SSSSSSS"]},
+        {"y": 1, "rows": ["LWWWWWL", "WG###GW", "W##D##W", "W#####W", "W#####W", "WG###GW", "LWWWWWL"]},
+        {"y": 2, "rows": ["LWWWWWL", "WG###GW", "W#####W", "W#####W", "W#####W", "WG###GW", "LWWWWWL"]},
+        {"y": 3, "rows": ["RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR"]},
+        {"y": 4, "rows": ["#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#"]}
+      ]
+    }
 
-    JSON RULES:
-    - width, depth, height MUST be <= #{max_size["width"]}, #{max_size["depth"]}, #{max_size["height"]}.
-    - Only use these block IDs in the palette: #{Enum.join(allowed_blocks, ", ")}.
-    - Use '#' in rows for air and map it to "minecraft:air" in the palette.
-    - Every non-# character used in rows MUST appear as a key in the palette.
-    - Layers' y must start at 0 and increase contiguously without gaps.
-    - Each layer must have exactly 'depth' rows, and each row must have exactly 'width' characters.
+    JSON CONSTRAINTS:
+    • **size**: width, depth, height MUST be ≤ #{max_size["width"]}, #{max_size["depth"]}, #{max_size["height"]}
+    • **palette**: Every character used in rows MUST have an entry in palette
+      - '#' MUST always map to "minecraft:air"
+      - Only use these blocks: #{Enum.join(allowed_blocks, ", ")}
+    • **layers**:
+      - Start at y=0 (ground) and increment by 1 each layer
+      - Each layer MUST have exactly 'depth' rows
+      - Each row MUST have exactly 'width' characters
+
+    ═══════════════════════════════════════════════════════════════════════════════
+    BUILDING QUALITY CHECKLIST
+    ═══════════════════════════════════════════════════════════════════════════════
+
+    Your structure MUST have:
+    ✓ Solid foundation at Y=0 (stone/cobblestone)
+    ✓ Hollow interior (mostly air inside walls)
+    ✓ Clear entrance with door at Y=1
+    ✓ At least 2-3 windows (glass_pane) placed symmetrically
+    ✓ Wooden walls (planks) with log corner posts
+    ✓ Sloped/pitched roof (stairs), NOT flat
+    ✓ Reasonable proportions (not too wide or too tall)
+    ✓ Symmetric front face
+    ✓ Medieval aesthetic (no modern materials)
+
+    AVOID:
+    ✗ Flat roofs
+    ✗ Random scattered blocks
+    ✗ Excessive complexity
+    ✗ Floating blocks with no support
+    ✗ More than 8 different block types
+    ✗ Placing blocks where multiblock structures auto-generate (door tops, bed halves)
+
+    ═══════════════════════════════════════════════════════════════════════════════
+    LEARNING FROM EXAMPLES
+    ═══════════════════════════════════════════════════════════════════════════════
+
+    You will see EXAMPLE pairs of (description + JSON structure) below.
+    Study their patterns: foundation layout, wall structure, roof shape, symmetry, block choices.
+    Use these as inspiration but DO NOT copy them exactly.
+    Create a NEW structure adapted to the user's specific request.
+
+    ═══════════════════════════════════════════════════════════════════════════════
+
+    Respond with ONLY the JSON object. No markdown, no explanations, no code blocks.
     """
 
     user_prompt = """
-    Build a **small medieval-style structure** with this description: "#{prompt}".
+    USER REQUEST: "#{prompt}"
 
-    Constraints:
-    - It must fit within the max size given in the system prompt.
-    - It should be compact and readable, not overly complex.
-    - If the user description is very vague, default to a simple medieval house.
+    INSTRUCTIONS:
+    1. Think about what type of medieval building fits this request (house, tower, smithy, etc.)
+    2. Plan the dimensions (width, depth, height) - keep it compact
+    3. Design layer by layer from Y=0 (foundation) upward
+    4. Ensure solid foundation, hollow interior, proper roof
+    5. Add door at Y=1 and windows symmetrically
+    6. Use medieval materials (stone, wood, glass)
 
-    Return ONLY the JSON object, nothing else.
+    If the request is vague, default to a simple medieval house: 5x5 or 7x7, stone foundation, wooden walls with log corners, glass windows, pitched roof.
+
+    Output ONLY the JSON object.
     """
 
-    with {:ok, raw} <- call_llm(system_prompt, user_prompt),
+    messages =
+      [%{"role" => "system", "content" => system_prompt}] ++
+        build_example_messages(examples) ++
+        [%{"role" => "user", "content" => user_prompt}]
+
+    with {:ok, raw} <- call_llm(messages),
          {:ok, parsed} <- Jason.decode(raw) do
       {:ok, parsed}
     else
@@ -84,16 +221,13 @@ defmodule PromptcraftBackend.StructureGenerator do
     end
   end
 
-  defp call_llm(system_prompt, user_prompt) do
+  defp call_llm(messages) do
     api_key = System.fetch_env!("OPENAI_API_KEY")
 
     body = %{
-      "model" => "gpt-4o-mini",
-      "messages" => [
-        %{"role" => "system", "content" => system_prompt},
-        %{"role" => "user", "content" => user_prompt}
-      ],
-      "temperature" => 0.3,
+      "model" => "gpt-5.1",
+      "messages" => messages,
+      "temperature" => 0.5,
       "response_format" => %{"type" => "json_object"}
     }
 

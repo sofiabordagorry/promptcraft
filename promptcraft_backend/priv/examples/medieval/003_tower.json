@@ -1,0 +1,25 @@
+{
+  "description": "6x6 medieval tower with cobblestone base and oak upper levels",
+  "structure": {
+    "palette": {
+      "S": "minecraft:cobblestone",
+      "B": "minecraft:stone_bricks",
+      "W": "minecraft:oak_planks",
+      "L": "minecraft:oak_log",
+      "D": "minecraft:oak_door",
+      "G": "minecraft:glass_pane",
+      "R": "minecraft:stone_brick_stairs",
+      "#": "minecraft:air"
+    },
+    "size": {"width": 6, "depth": 6, "height": 7},
+    "layers": [
+      {"y": 0, "rows": ["SSSSSS", "SSSSSS", "SSSSSS", "SSDDSS", "SSSSSS", "SSSSSS"]},
+      {"y": 1, "rows": ["BBBBBB", "BG##GB", "B####B", "BD##DB", "B####B", "BBBBBB"]},
+      {"y": 2, "rows": ["LWWWWL", "WG##GW", "W####W", "W####W", "W####W", "LWWWWL"]},
+      {"y": 3, "rows": ["LWWWWL", "WG##GW", "W####W", "W####W", "W####W", "LWWWWL"]},
+      {"y": 4, "rows": ["LWWWWL", "W####W", "W####W", "W####W", "W####W", "LWWWWL"]},
+      {"y": 5, "rows": ["RRRRRR", "RRRRRR", "RRRRRR", "RRRRRR", "RRRRRR", "RRRRRR"]},
+      {"y": 6, "rows": ["#RRRR#", "#RRRR#", "#RRRR#", "#RRRR#", "#RRRR#", "#RRRR#"]}
+    ]
+  }
+}

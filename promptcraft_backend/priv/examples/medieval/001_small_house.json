@@ -1,0 +1,22 @@
+{
+  "description": "Small 5x5 medieval house with stone foundation, wooden walls, and pitched roof",
+  "structure": {
+    "palette": {
+      "S": "minecraft:cobblestone",
+      "W": "minecraft:oak_planks",
+      "L": "minecraft:oak_log",
+      "D": "minecraft:oak_door",
+      "G": "minecraft:glass",
+      "R": "minecraft:oak_stairs",
+      "#": "minecraft:air",
+      "B": "minecraft:red_bed"
+    },
+    "size": {"width": 5, "depth": 5, "height": 5},
+    "layers": [
+      {"y": 0, "rows": ["SSSSS", "SSSSS", "SSSSS", "SSSSS", "SSSSS"]},
+      {"y": 1, "rows": ["LWDWL", "W###W", "W###W", "WB##W", "LWWWL"]},
+      {"y": 2, "rows": ["LW#WL", "W###W", "G###G", "W###W", "LWWWL"]},
+      {"y": 3, "rows": ["WWWWW", "WWWWW", "WWWWW", "WWWWW", "WWWWW"]}
+    ]
+  }
+}
