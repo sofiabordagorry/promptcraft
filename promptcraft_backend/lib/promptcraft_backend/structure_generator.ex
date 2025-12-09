@@ -1,8 +1,9 @@
 defmodule PromptcraftBackend.StructureGenerator do
   @moduledoc false
 
+  alias PromptcraftBackend.Config
+
   @allowed_blocks_file "priv/allowed_blocks.txt"
-  @examples_dir "priv/examples/medieval"
 
   defp load_allowed_blocks do
     case File.read(@allowed_blocks_file) do
@@ -27,19 +28,29 @@ defmodule PromptcraftBackend.StructureGenerator do
   end
 
   defp load_examples do
-    case File.ls(@examples_dir) do
-      {:ok, files} ->
-        files
-        |> Enum.filter(&String.ends_with?(&1, ".json"))
-        |> Enum.map(fn file ->
-          path = Path.join(@examples_dir, file)
-          {:ok, content} = File.read(path)
-          Jason.decode!(content)
-        end)
+    Config.example_paths()
+    |> Enum.flat_map(fn folder_path ->
+      case File.ls(folder_path) do
+        {:ok, files} ->
+          files
+          |> Enum.filter(&String.ends_with?(&1, ".json"))
+          |> Enum.map(fn file ->
+            path = Path.join(folder_path, file)
+            case File.read(path) do
+              {:ok, content} ->
+                case Jason.decode(content) do
+                  {:ok, json} -> json
+                  {:error, _} -> nil
+                end
+              {:error, _} -> nil
+            end
+          end)
+          |> Enum.reject(&is_nil/1)
 
-      {:error, _} ->
-        []
-    end
+        {:error, _} ->
+          []
+      end
+    end)
   end
 
   defp pick_examples(n \\ 2) do

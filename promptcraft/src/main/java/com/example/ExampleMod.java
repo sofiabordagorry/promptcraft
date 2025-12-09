@@ -101,6 +101,76 @@ public class ExampleMod implements ModInitializer {
                                     })
                             )
             );
+
+            // Select Position 1
+            dispatcher.register(
+                    Commands.literal("selectPos1")
+                            .executes(context -> {
+                                ServerPlayer player = context.getSource().getPlayerOrException();
+                                var pos = player.blockPosition();
+                                StructureExporter.setPos1(player, pos);
+                                player.sendSystemMessage(Component.literal("Position 1 set to: " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ()));
+                                return 1;
+                            })
+            );
+
+            // Select Position 2
+            dispatcher.register(
+                    Commands.literal("selectPos2")
+                            .executes(context -> {
+                                ServerPlayer player = context.getSource().getPlayerOrException();
+                                var pos = player.blockPosition();
+                                StructureExporter.setPos2(player, pos);
+                                player.sendSystemMessage(Component.literal("Position 2 set to: " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ()));
+                                
+                                if (StructureExporter.hasSelection(player)) {
+                                    var pos1 = StructureExporter.getPos1(player);
+                                    var pos2 = StructureExporter.getPos2(player);
+                                    int width = Math.abs(pos2.getX() - pos1.getX()) + 1;
+                                    int height = Math.abs(pos2.getY() - pos1.getY()) + 1;
+                                    int depth = Math.abs(pos2.getZ() - pos1.getZ()) + 1;
+                                    player.sendSystemMessage(Component.literal("Selection: " + width + "x" + depth + "x" + height + " (" + (width * height * depth) + " blocks)"));
+                                }
+                                return 1;
+                            })
+            );
+
+            // Export Structure
+            dispatcher.register(
+                    Commands.literal("exportStructure")
+                            .then(Commands.argument("description", MessageArgument.message())
+                                    .executes(context -> {
+                                        ServerPlayer player = context.getSource().getPlayerOrException();
+                                        String description = MessageArgument.getMessage(context, "description").getString();
+
+                                        if (!StructureExporter.hasSelection(player)) {
+                                            player.sendSystemMessage(Component.literal("No selection! Use /selectPos1 and /selectPos2 first"));
+                                            return 0;
+                                        }
+
+                                        player.sendSystemMessage(Component.literal("Exporting structure..."));
+
+                                        String json = StructureExporter.exportStructure(player, player.serverLevel(), description);
+                                        
+                                        if (json != null) {
+                                            // Generate filename from description
+                                            String filename = description.replaceAll("[^a-zA-Z0-9_-]", "_").toLowerCase();
+                                            
+                                            boolean saved = StructureExporter.saveStructureToFile(json, filename);
+                                            
+                                            if (saved) {
+                                                player.sendSystemMessage(Component.literal("Structure exported to: priv/examples/exported/" + filename + ".json"));
+                                            } else {
+                                                player.sendSystemMessage(Component.literal("Failed to save file (check server logs)"));
+                                            }
+                                        } else {
+                                            player.sendSystemMessage(Component.literal("Export failed!"));
+                                        }
+
+                                        return 1;
+                                    })
+                            )
+            );
         });
 
         LOGGER.info("Promptcraft initialized!");

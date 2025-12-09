@@ -22,10 +22,17 @@ defmodule PromptcraftBackendWeb.StructureController do
   end
 
   def load_example(conn, %{"name" => name}) do
-    example_path = Path.join(["priv", "examples", "medieval", "#{name}.json"])
+    result = Enum.find_value(PromptcraftBackend.Config.example_folders(), fn folder ->
+      example_path = Path.join([PromptcraftBackend.Config.examples_base_dir(), folder, "#{name}.json"])
 
-    case File.read(example_path) do
-      {:ok, content} ->
+      case File.read(example_path) do
+        {:ok, content} -> {:ok, content, folder}
+        {:error, _} -> nil
+      end
+    end)
+
+    case result do
+      {:ok, content, folder} ->
         case Jason.decode(content) do
           {:ok, %{"structure" => structure}} ->
             json(conn, structure)
@@ -36,7 +43,7 @@ defmodule PromptcraftBackendWeb.StructureController do
             |> json(%{"error" => "Invalid JSON in example file"})
         end
 
-      {:error, :enoent} ->
+      nil ->
         conn
         |> put_status(:not_found)
         |> json(%{"error" => "Example not found"})
@@ -49,36 +56,37 @@ defmodule PromptcraftBackendWeb.StructureController do
   end
 
   def list_examples(conn, _params) do
-    examples_dir = Path.join(["priv", "examples", "medieval"])
+    examples =
+      PromptcraftBackend.Config.example_paths()
+      |> Enum.flat_map(fn examples_dir ->
+        case File.ls(examples_dir) do
+          {:ok, files} ->
+            files
+            |> Enum.filter(&String.ends_with?(&1, ".json"))
+            |> Enum.map(fn file ->
+              name = String.replace(file, ".json", "")
+              path = Path.join(examples_dir, file)
 
-    case File.ls(examples_dir) do
-      {:ok, files} ->
-        examples =
-          files
-          |> Enum.filter(&String.ends_with?(&1, ".json"))
-          |> Enum.map(fn file ->
-            name = String.replace(file, ".json", "")
-            path = Path.join(examples_dir, file)
+              case File.read(path) do
+                {:ok, content} ->
+                  case Jason.decode(content) do
+                    {:ok, %{"description" => desc}} ->
+                      %{name: name, description: desc}
 
-            case File.read(path) do
-              {:ok, content} ->
-                case Jason.decode(content) do
-                  {:ok, %{"description" => desc}} ->
-                    %{name: name, description: desc}
+                    _ ->
+                      %{name: name, description: "No description"}
+                  end
 
-                  _ ->
-                    %{name: name, description: "No description"}
-                end
+                _ ->
+                  %{name: name, description: "Error reading file"}
+              end
+            end)
 
-              _ ->
-                %{name: name, description: "Error reading file"}
-            end
-          end)
+          {:error, _} ->
+            []
+        end
+      end)
 
-        json(conn, %{examples: examples})
-
-      {:error, _} ->
-        json(conn, %{examples: []})
-    end
+    json(conn, %{examples: examples})
   end
 end
