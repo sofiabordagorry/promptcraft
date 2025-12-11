@@ -1,0 +1,173 @@
+{
+  "description": "dark_oak_tree",
+  "structure": {
+    "palette": {
+      "#": "minecraft:air",
+      "A": "minecraft:dark_oak_log[axis\u003dy]",
+      "B": "minecraft:dark_oak_leaves[distance\u003d3,persistent\u003dfalse,waterlogged\u003dfalse]",
+      "C": "minecraft:dark_oak_leaves[distance\u003d2,persistent\u003dfalse,waterlogged\u003dfalse]",
+      "D": "minecraft:dark_oak_leaves[distance\u003d1,persistent\u003dfalse,waterlogged\u003dfalse]",
+      "E": "minecraft:dark_oak_leaves[distance\u003d4,persistent\u003dfalse,waterlogged\u003dfalse]",
+      "F": "minecraft:dark_oak_leaves[distance\u003d5,persistent\u003dfalse,waterlogged\u003dfalse]",
+      "G": "minecraft:dark_oak_leaves[distance\u003d3,persistent\u003dtrue,waterlogged\u003dfalse]",
+      "H": "minecraft:dark_oak_leaves[distance\u003d4,persistent\u003dtrue,waterlogged\u003dfalse]"
+    },
+    "size": {
+      "width": 10,
+      "depth": 10,
+      "height": 10
+    },
+    "layers": [
+      {
+        "y": 0,
+        "rows": [
+          "##########",
+          "##########",
+          "##########",
+          "####AA####",
+          "####AA####",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 1,
+        "rows": [
+          "##########",
+          "##########",
+          "##########",
+          "####AA####",
+          "####AA####",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 2,
+        "rows": [
+          "##########",
+          "##########",
+          "##########",
+          "####AA####",
+          "####AA####",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 3,
+        "rows": [
+          "##########",
+          "##########",
+          "##########",
+          "####AAA###",
+          "####AA####",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 4,
+        "rows": [
+          "##########",
+          "##########",
+          "###A#A####",
+          "####AAA###",
+          "####AA####",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 5,
+        "rows": [
+          "##########",
+          "##########",
+          "###AAA####",
+          "####AAA###",
+          "####AA####",
+          "####AA####",
+          "##########",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 6,
+        "rows": [
+          "##BCCCB###",
+          "#BCDDDCB##",
+          "#CDAAADCB#",
+          "#BCDAAADC#",
+          "##CDAADCB#",
+          "##CDAADC##",
+          "##BCDDCB##",
+          "###BCCB###",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 7,
+        "rows": [
+          "##EBBBE###",
+          "#EBCCCBEF#",
+          "#BCDDDCGE#",
+          "#BCDAADCB#",
+          "#BCDAADCB#",
+          "#EBCDDCBE#",
+          "##EBCCB###",
+          "##FEBBE###",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 8,
+        "rows": [
+          "##########",
+          "####BB####",
+          "###CCCBH##",
+          "##BCDDCB##",
+          "##BCDDCB##",
+          "###BCCB###",
+          "####BB####",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      },
+      {
+        "y": 9,
+        "rows": [
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########",
+          "##########"
+        ]
+      }
+    ]
+  }
+}

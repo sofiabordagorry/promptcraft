@@ -53,18 +53,51 @@ defmodule PromptcraftBackend.StructureGenerator do
     end)
   end
 
-  defp pick_examples(n \\ 2) do
-    load_examples()
+  defp pick_examples(n, style) do
+    examples = case style do
+      nil -> load_examples()
+      style_name -> load_examples_for_style(style_name)
+    end
+
+    examples
     |> Enum.shuffle()
     |> Enum.take(n)
   end
 
+  defp load_examples_for_style(style) do
+    style_path = Path.join([Config.examples_base_dir(), style])
+
+    case File.ls(style_path) do
+      {:ok, files} ->
+        files
+        |> Enum.filter(&String.ends_with?(&1, ".json"))
+        |> Enum.reject(&(&1 == "_prompt.txt"))
+        |> Enum.map(fn file ->
+          path = Path.join(style_path, file)
+          case File.read(path) do
+            {:ok, content} ->
+              case Jason.decode(content) do
+                {:ok, json} -> json
+                {:error, _} -> nil
+              end
+            {:error, _} -> nil
+          end
+        end)
+        |> Enum.reject(&is_nil/1)
+
+      {:error, _} ->
+        []
+    end
+  end
+
   defp build_example_messages(examples) do
-    Enum.flat_map(examples, fn %{"description" => desc, "structure" => structure} ->
+    examples
+    |> Enum.with_index(1)
+    |> Enum.flat_map(fn {%{"description" => desc, "structure" => structure}, idx} ->
       [
         %{
           "role" => "user",
-          "content" => "Example request: \"#{desc}\"\n\nGenerate the structure JSON."
+          "content" => "EXAMPLE #{idx}: Generate a structure for: \"#{desc}\""
         },
         %{
           "role" => "assistant",
@@ -74,14 +107,33 @@ defmodule PromptcraftBackend.StructureGenerator do
     end)
   end
 
-  def generate(prompt, max_size) do
+  def generate(prompt, max_size, style \\ nil) do
     allowed_blocks = load_allowed_blocks()
-    examples = pick_examples(2)
+
+    detected_style = style || detect_style_from_prompt(prompt)
+
+    examples = pick_examples(3, detected_style)
+
+    # Get style-specific instructions if available
+    style_specific_prompt = case Config.get_style_config(detected_style) do
+      {:ok, %{custom_prompt: custom}} ->
+        """
+
+        ═══════════════════════════════════════════════════════════════════════════════
+        STYLE-SPECIFIC INSTRUCTIONS
+        ═══════════════════════════════════════════════════════════════════════════════
+
+        #{custom}
+        """
+      {:error, _} -> ""
+    end
+
+    style_context = if detected_style, do: " in #{detected_style} style", else: ""
 
     system_prompt = """
-    You are an expert Minecraft builder specializing in creating authentic, beautiful medieval structures.
+    You are an expert Minecraft builder specializing in creating authentic, beautiful structures.
 
-    YOUR TASK: Generate a complete 3D voxel structure as a JSON object.
+    YOUR TASK: Generate a complete 3D voxel structure as a JSON object.#{style_specific_prompt}
 
     ═══════════════════════════════════════════════════════════════════════════════
     MINECRAFT BUILDING FUNDAMENTALS
@@ -92,21 +144,6 @@ defmodule PromptcraftBackend.StructureGenerator do
     • Support: Most blocks need support below them. Avoid large floating structures.
     • Water: Flows and spreads. Use carefully or not at all in structures.
     • Ground Level: Y=0 is the BOTTOM of your structure (foundation level).
-
-    MEDIEVAL ARCHITECTURE PRINCIPLES:
-    • **Foundation (Y=0)**: Always solid stone, cobblestone, or stone_bricks
-    • **Walls (Y=1 to Y=height-2)**: Oak/spruce planks with oak_log corner posts
-    • **Roof (top 1-2 layers)**: MUST be sloped/pitched using stairs, never flat
-    • **Symmetry**: Front face should be symmetric (left mirrors right)
-    • **Scale**: Small buildings (5x5 to 7x7), not massive castles
-    • **Details**: Include windows (glass_pane), door, maybe decorative elements
-
-    COMMON BUILDING PATTERNS:
-    • Corner posts: Use oak_log or spruce_log at all 4 corners of each wall layer
-    • Windows: Glass blocks or glass_pane, placed symmetrically
-    • Doors: Oak_door at ground level (Y=1), creates 2-block tall opening automatically
-    • Roof: Use oak_stairs or stone_brick_stairs in triangular/pyramid pattern
-    • Interior: Mostly hollow (air) with minimal furniture against walls
 
     MULTIBLOCK STRUCTURES (CRITICAL):
     • **Doors**: Automatically create 2-block tall structure (Y and Y+1)
@@ -165,34 +202,16 @@ defmodule PromptcraftBackend.StructureGenerator do
         * "R": "minecraft:oak_stairs[facing=north,half=bottom]"
         * "T": "minecraft:oak_stairs[facing=south,half=top]"
         * "S": "minecraft:oak_slab[type=bottom]"
-        Common properties: facing (north/south/east/west), half (top/bottom), type (top/bottom/double)
+        * "L": "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
+        * "A": "minecraft:oak_log[axis=y]"
+        Common properties:
+        - Stairs/slabs: facing (north/south/east/west), half (top/bottom), type (top/bottom/double)
+        - Leaves: distance (1-7), persistent (true/false), waterlogged (false)
+        - Logs: axis (x/y/z)
     • **layers**:
       - Start at y=0 (ground) and increment by 1 each layer
       - Each layer MUST have exactly 'depth' rows
       - Each row MUST have exactly 'width' characters
-
-    ═══════════════════════════════════════════════════════════════════════════════
-    BUILDING QUALITY CHECKLIST
-    ═══════════════════════════════════════════════════════════════════════════════
-
-    Your structure MUST have:
-    ✓ Solid foundation at Y=0 (stone/cobblestone)
-    ✓ Hollow interior (mostly air inside walls)
-    ✓ Clear entrance with door at Y=1
-    ✓ At least 2-3 windows (glass_pane) placed symmetrically
-    ✓ Wooden walls (planks) with log corner posts
-    ✓ Sloped/pitched roof (stairs), NOT flat
-    ✓ Reasonable proportions (not too wide or too tall)
-    ✓ Symmetric front face
-    ✓ Medieval aesthetic (no modern materials)
-
-    AVOID:
-    ✗ Flat roofs
-    ✗ Random scattered blocks
-    ✗ Excessive complexity
-    ✗ Floating blocks with no support
-    ✗ More than 8 different block types
-    ✗ Placing blocks where multiblock structures auto-generate (door tops, bed halves)
 
     ═══════════════════════════════════════════════════════════════════════════════
     LEARNING FROM EXAMPLES
@@ -212,14 +231,11 @@ defmodule PromptcraftBackend.StructureGenerator do
     USER REQUEST: "#{prompt}"
 
     INSTRUCTIONS:
-    1. Think about what type of medieval building fits this request (house, tower, smithy, etc.)
+    1. Think about what type of structure fits this request#{style_context}
     2. Plan the dimensions (width, depth, height) - keep it compact
     3. Design layer by layer from Y=0 (foundation) upward
-    4. Ensure solid foundation, hollow interior, proper roof
-    5. Add door at Y=1 and windows symmetrically
-    6. Use medieval materials (stone, wood, glass)
-
-    If the request is vague, default to a simple medieval house: 5x5 or 7x7, stone foundation, wooden walls with log corners, glass windows, pitched roof.
+    4. Follow the style-specific instructions above if provided
+    5. Use appropriate materials for the style
 
     Output ONLY the JSON object.
     """
@@ -244,7 +260,7 @@ defmodule PromptcraftBackend.StructureGenerator do
     body = %{
       "model" => "gpt-5.1",
       "messages" => messages,
-      "temperature" => 0.5,
+      "temperature" => 0.3,
       "response_format" => %{"type" => "json_object"}
     }
 
@@ -262,5 +278,28 @@ defmodule PromptcraftBackend.StructureGenerator do
       other ->
         {:error, other}
     end
+  end
+
+
+
+  defp detect_style_from_prompt(prompt) do
+    prompt_lower = String.downcase(prompt)
+
+    available_styles = Config.style_folders()
+
+    style_keywords = %{
+      "tree" => ["tree", "oak", "birch", "spruce", "jungle", "acacia", "dark oak", "cherry"],
+      "medieval" => ["medieval", "castle", "tower", "fortress", "keep", "house", "cottage"],
+      "couch" => ["couch", "sofa", "chair", "seating", "furniture"],
+      "table" => ["table", "desk", "dining"]
+    }
+
+    detected = Enum.find(available_styles, fn style ->
+      keywords = Map.get(style_keywords, style, [style])
+      Enum.any?(keywords, fn keyword ->
+        String.contains?(prompt_lower, keyword)
+      end)
+    end)
+    detected
   end
 end

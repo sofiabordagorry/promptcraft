@@ -3,8 +3,9 @@ defmodule PromptcraftBackendWeb.StructureController do
 
   def generate(conn, %{"prompt" => prompt} = params) do
     max_size = Map.get(params, "max_size", %{"width" => 16, "depth" => 16, "height" => 16})
+    style = Map.get(params, "style", nil)
 
-    case PromptcraftBackend.StructureGenerator.generate(prompt, max_size) do
+    case PromptcraftBackend.StructureGenerator.generate(prompt, max_size, style) do
       {:ok, structure} ->
         json(conn, structure)
 
@@ -32,7 +33,7 @@ defmodule PromptcraftBackendWeb.StructureController do
     end)
 
     case result do
-      {:ok, content, folder} ->
+      {:ok, content, _folder} ->
         case Jason.decode(content) do
           {:ok, %{"structure" => structure}} ->
             json(conn, structure)
