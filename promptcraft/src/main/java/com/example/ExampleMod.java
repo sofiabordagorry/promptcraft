@@ -67,41 +67,6 @@ public class ExampleMod implements ModInitializer {
                             )
             );
 
-            // Example Structure command
-            dispatcher.register(
-                    Commands.literal("buildExample")
-                            .then(Commands.argument("name", MessageArgument.message())
-                                    .executes(context -> {
-                                        ServerPlayer player = context.getSource().getPlayerOrException();
-                                        String name = MessageArgument.getMessage(context, "name").getString();
-
-                                        player.sendSystemMessage(Component.literal("Loading example: " + name));
-
-                                        BackendClient.requestExample(
-                                                name,
-                                                structure -> {
-                                                    UUID structureId = StructureRegistry.register(structure);
-
-                                                    ItemStack builderBlock = new ItemStack(ModBlocks.AI_BUILDER_BLOCK);
-                                                    
-                                                    var tag = builderBlock.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-                                                    tag.putString("structure_id", structureId.toString());
-                                                    builderBlock.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-
-                                                    player.getInventory().add(builderBlock);
-                                                    player.sendSystemMessage(Component.literal("Example loaded! Place the block to build."));
-                                                },
-                                                error -> {
-                                                    player.sendSystemMessage(Component.literal("Error: " + error));
-                                                    LOGGER.error("Example load failed: {}", error);
-                                                }
-                                        );
-
-                                        return 1;
-                                    })
-                            )
-            );
-
             // Select Position 1
             dispatcher.register(
                     Commands.literal("selectPos1")

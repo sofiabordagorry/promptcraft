@@ -1,17 +1,13 @@
 defmodule PromptcraftBackend.Config do
-
   @examples_base_dir "priv/examples"
-  @example_folders ["exported", "medieval"]
-  @style_folders ["medieval", "tree"]
+  @style_folders ["tree", "medieval", "village", "generic_house"]
 
   def examples_base_dir, do: @examples_base_dir
-
-  def example_folders, do: @example_folders
 
   def style_folders, do: @style_folders
 
   def example_paths do
-    Enum.map(@example_folders, fn folder ->
+    Enum.map(@style_folders, fn folder ->
       Path.join(@examples_base_dir, folder)
     end)
   end
@@ -25,12 +21,9 @@ defmodule PromptcraftBackend.Config do
     case File.read(prompt_file) do
       {:ok, custom_prompt} ->
         {:ok, %{style: style, path: style_path, custom_prompt: custom_prompt}}
+
       {:error, _} ->
         {:error, :no_prompt_file}
     end
-  end
-
-  def list_styles do
-    @style_folders
   end
 end

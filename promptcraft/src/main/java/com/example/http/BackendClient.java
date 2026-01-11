@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 
 public class BackendClient {
     private static final String BACKEND_URL = "http://localhost:4000/api/generate";
-    private static final String EXAMPLES_URL = "http://localhost:4000/api/examples";
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -95,30 +94,5 @@ public class BackendClient {
         }
 
         return new StructureDefinition(palette, size, layers);
-    }
-
-    public static void requestExample(String name, Consumer<StructureDefinition> onSuccess, Consumer<String> onError) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(EXAMPLES_URL + "/" + name))
-                        .header("Accept", "application/json")
-                        .GET()
-                        .timeout(Duration.ofSeconds(10))
-                        .build();
-
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200) {
-                    StructureDefinition structure = parseStructure(response.body());
-                    onSuccess.accept(structure);
-                } else {
-                    onError.accept("Example not found: " + name);
-                }
-            } catch (Exception e) {
-                ExampleMod.LOGGER.error("Error loading example from backend", e);
-                onError.accept("Error: " + e.getMessage());
-            }
-        });
     }
 }

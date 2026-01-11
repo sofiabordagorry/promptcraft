@@ -10,7 +10,5 @@ defmodule PromptcraftBackendWeb.Router do
 
     post "/generate", StructureController, :generate
     post "/generate-structure", StructureController, :generate
-    get "/examples", StructureController, :list_examples
-    get "/examples/:name", StructureController, :load_example
   end
 end
