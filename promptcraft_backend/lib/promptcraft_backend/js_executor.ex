@@ -1,14 +1,6 @@
 defmodule PromptcraftBackend.JsExecutor do
-  @moduledoc """
-  Executes JavaScript build code to generate Minecraft structures.
-  This module simulates the JS execution environment used by BuilderGPT.
-  """
+  @moduledoc false
 
-  @doc """
-  Executes JavaScript build code and returns a list of block placements.
-
-  Returns: {:ok, blocks} where blocks is a list of %{x: x, y: y, z: z, block: block_type, block_states: states}
-  """
   def execute(js_code) do
     # Parse and execute the JavaScript code
     # Since we can't execute actual JS in pure Elixir, we'll use a port to Node.js
@@ -21,7 +13,11 @@ defmodule PromptcraftBackend.JsExecutor do
   defp execute_via_nodejs(js_code) do
     # Create a temporary JS file that includes our runtime and the user's code
     runtime_code = build_runtime()
-    full_code = runtime_code <> "\n\n" <> js_code <> "\n\nbuildCreation(0, 0, 0);\nconsole.log(JSON.stringify(getBlocks()));"
+
+    full_code =
+      runtime_code <>
+        "\n\n" <>
+        js_code <> "\n\nbuildCreation(0, 0, 0);\nconsole.log(JSON.stringify(getBlocks()));"
 
     # Create temp file
     temp_file = Path.join(System.tmp_dir!(), "build_#{:erlang.unique_integer([:positive])}.js")
@@ -35,18 +31,20 @@ defmodule PromptcraftBackend.JsExecutor do
           # Parse the JSON output
           case Jason.decode(output) do
             {:ok, blocks} ->
-              parsed_blocks = Enum.map(blocks, fn block ->
-                %{
-                  x: block["x"],
-                  y: block["y"],
-                  z: block["z"],
-                  block: normalize_block_name(block["block"]),
-                  block_states: block["blockStates"]
-                }
-              end)
+              parsed_blocks =
+                Enum.map(blocks, fn block ->
+                  %{
+                    x: block["x"],
+                    y: block["y"],
+                    z: block["z"],
+                    block: normalize_block_name(block["block"]),
+                    block_states: block["blockStates"]
+                  }
+                end)
 
               IO.puts("JS Execution: Generated #{length(parsed_blocks)} blocks")
               {:ok, parsed_blocks}
+
             {:error, _} ->
               {:error, "Failed to parse block data: #{output}"}
           end
@@ -205,11 +203,13 @@ defmodule PromptcraftBackend.JsExecutor do
 
   defp normalize_block_name(name) when is_binary(name) do
     normalized = String.trim(name)
+
     if String.starts_with?(normalized, "minecraft:") do
       normalized
     else
       "minecraft:" <> normalized
     end
   end
+
   defp normalize_block_name(_), do: "minecraft:air"
 end

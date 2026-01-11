@@ -36,15 +36,20 @@ defmodule PromptcraftBackend.StructureGenerator do
           |> Enum.filter(&String.ends_with?(&1, ".js"))
           |> Enum.map(fn file ->
             path = Path.join(folder_path, file)
+
             case File.read(path) do
               {:ok, content} ->
                 # Extract description from first comment line
-                description = case Regex.run(~r/^\/\/\s*(.+)$/m, content) do
-                  [_, desc] -> desc
-                  _ -> "Example structure"
-                end
+                description =
+                  case Regex.run(~r/^\/\/\s*(.+)$/m, content) do
+                    [_, desc] -> desc
+                    _ -> "Example structure"
+                  end
+
                 {description, content}
-              {:error, _} -> nil
+
+              {:error, _} ->
+                nil
             end
           end)
           |> Enum.reject(&is_nil/1)
@@ -56,10 +61,11 @@ defmodule PromptcraftBackend.StructureGenerator do
   end
 
   defp pick_js_examples(n, style) do
-    examples = case style do
-      nil -> load_js_examples()
-      style_name -> load_js_examples_for_style(style_name)
-    end
+    examples =
+      case style do
+        nil -> load_js_examples()
+        style_name -> load_js_examples_for_style(style_name)
+      end
 
     examples
     |> Enum.shuffle()
@@ -76,15 +82,20 @@ defmodule PromptcraftBackend.StructureGenerator do
         |> Enum.reject(&(&1 == "_prompt.txt"))
         |> Enum.map(fn file ->
           path = Path.join(style_path, file)
+
           case File.read(path) do
             {:ok, content} ->
               # Extract description from first comment
-              description = case Regex.run(~r/^\/\/\s*(.+)$/m, content) do
-                [_, desc] -> desc
-                _ -> "Example structure"
-              end
+              description =
+                case Regex.run(~r/^\/\/\s*(.+)$/m, content) do
+                  [_, desc] -> desc
+                  _ -> "Example structure"
+                end
+
               {description, content}
-            {:error, _} -> nil
+
+            {:error, _} ->
+              nil
           end
         end)
         |> Enum.reject(&is_nil/1)
@@ -105,7 +116,8 @@ defmodule PromptcraftBackend.StructureGenerator do
         },
         %{
           "role" => "assistant",
-          "content" => "<inspiration>This structure demonstrates #{description}.</inspiration>\n\n<description>#{description}</description>\n\n<code>\n#{js_code}\n</code>"
+          "content" =>
+            "<inspiration>This structure demonstrates #{description}.</inspiration>\n\n<description>#{description}</description>\n\n<code>\n#{js_code}\n</code>"
         }
       ]
     end)
@@ -119,18 +131,21 @@ defmodule PromptcraftBackend.StructureGenerator do
     js_examples = pick_js_examples(3, detected_style)
 
     # Get style-specific instructions if available
-    style_specific_prompt = case Config.get_style_config(detected_style) do
-      {:ok, %{custom_prompt: custom}} ->
-        """
+    style_specific_prompt =
+      case Config.get_style_config(detected_style) do
+        {:ok, %{custom_prompt: custom}} ->
+          """
 
-        ═══════════════════════════════════════════════════════════════════════════════
-        STYLE-SPECIFIC INSTRUCTIONS
-        ═══════════════════════════════════════════════════════════════════════════════
+          ═══════════════════════════════════════════════════════════════════════════════
+          STYLE-SPECIFIC INSTRUCTIONS
+          ═══════════════════════════════════════════════════════════════════════════════
 
-        #{custom}
-        """
-      {:error, _} -> ""
-    end
+          #{custom}
+          """
+
+        {:error, _} ->
+          ""
+      end
 
     style_context = if detected_style, do: " in #{detected_style} style", else: ""
 
@@ -487,16 +502,18 @@ defmodule PromptcraftBackend.StructureGenerator do
         unique_blocks
         |> Enum.with_index()
         |> Enum.map(fn {block, idx} ->
-          char = if block == "minecraft:air" do
-            "#"
-          else
-            cond do
-              idx < 26 -> <<65 + idx>>
-              idx < 52 -> <<97 + (idx - 26)>>
-              idx < 62 -> <<48 + (idx - 52)>>
-              true -> "@"
+          char =
+            if block == "minecraft:air" do
+              "#"
+            else
+              cond do
+                idx < 26 -> <<65 + idx>>
+                idx < 52 -> <<97 + (idx - 26)>>
+                idx < 62 -> <<48 + (idx - 52)>>
+                true -> "@"
+              end
             end
-          end
+
           {char, block}
         end)
         |> Enum.into(%{})
@@ -513,28 +530,33 @@ defmodule PromptcraftBackend.StructureGenerator do
                   Map.get(block_to_char, block, "#")
                 end
                 |> Enum.join("")
+
               row
             end
 
           %{"y" => y, "rows" => rows}
         end
 
-      {:ok, %{
-        "palette" => palette,
-        "size" => %{"width" => width, "depth" => depth, "height" => height},
-        "layers" => layers
-      }}
+      {:ok,
+       %{
+         "palette" => palette,
+         "size" => %{"width" => width, "depth" => depth, "height" => height},
+         "layers" => layers
+       }}
     end
   end
 
-  defp format_block(block_name, block_states) when is_map(block_states) and map_size(block_states) > 0 do
+  defp format_block(block_name, block_states)
+       when is_map(block_states) and map_size(block_states) > 0 do
     states_str =
       block_states
       |> Enum.sort()
       |> Enum.map(fn {k, v} -> "#{k}=#{v}" end)
       |> Enum.join(",")
+
     "#{block_name}[#{states_str}]"
   end
+
   defp format_block(block_name, _), do: block_name
 
   defp call_llm(messages) do
@@ -563,8 +585,6 @@ defmodule PromptcraftBackend.StructureGenerator do
         {:error, other}
     end
   end
-
-
 
   defp detect_style_from_prompt(prompt) do
     prompt_lower = String.downcase(prompt)
