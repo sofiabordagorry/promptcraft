@@ -6,11 +6,11 @@ MEDIEVAL ARCHITECTURE PRINCIPLES:
 • **Roof (top 1-2 layers)**: MUST be sloped/pitched using stairs, never flat
 • **Symmetry**: Front face should be symmetric (left mirrors right)
 • **Scale**: Small buildings (5x5 to 7x7), not massive castles
-• **Details**: Include windows (glass_pane), door, maybe decorative elements
+• **Details**: Include windows (glass), door, maybe decorative elements
 
 COMMON BUILDING PATTERNS:
 • Corner posts: Use oak_log or spruce_log at all 4 corners of each wall layer
-• Windows: Glass blocks or glass_pane, placed symmetrically
+• Windows: Glass blocks or glass, placed symmetrically
 • Doors: Oak_door at ground level (Y=1), creates 2-block tall opening automatically
 • Roof: Use oak_stairs or stone_brick_stairs in triangular/pyramid pattern
 • Interior: Mostly hollow (air) with minimal furniture against walls
@@ -19,7 +19,7 @@ BUILDING QUALITY REQUIREMENTS:
 ✓ Solid foundation at Y=0 (stone/cobblestone)
 ✓ Hollow interior (mostly air inside walls)
 ✓ Clear entrance with door at Y=1
-✓ At least 2-3 windows (glass_pane) placed symmetrically
+✓ At least 2-3 windows (glass) placed symmetrically
 ✓ Wooden walls (planks) with log corner posts
 ✓ Sloped/pitched roof (stairs), NOT flat
 ✓ Reasonable proportions (not too wide or too tall)
