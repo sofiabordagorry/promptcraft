@@ -68,12 +68,12 @@ function buildCreation(startX, startY, startZ) {
   safeSetBlock(startX + 3, startY + 1, startZ + 3, "oak_planks");
   safeSetBlock(startX + 4, startY + 1, startZ + 3, "red_bed", { blockStates: { facing: "west", occupied: "false", part: "head" } });
   safeSetBlock(startX + 5, startY + 1, startZ + 3, "red_bed", { blockStates: { facing: "west", occupied: "false", part: "foot" } });
-  safeSetBlock(startX + 8, startY + 1, startZ + 3, "oak_door", { blockStates: { facing: "east", half: "lower", hinge: "left", open: "false", powered: "false" } });
+  safeSetBlock(startX + 8, startY + 1, startZ + 3, "oak_door", { blockStates: { facing: "east", hinge: "left", open: "false", powered: "false" } });
   safeSetBlock(startX + 2, startY + 1, startZ + 4, "grass_block", { blockStates: { snowy: "false" } });
   safeSetBlock(startX + 3, startY + 1, startZ + 4, "oak_planks");
   safeSetBlock(startX + 4, startY + 1, startZ + 4, "red_bed", { blockStates: { facing: "west", occupied: "false", part: "head" } });
   safeSetBlock(startX + 5, startY + 1, startZ + 4, "red_bed", { blockStates: { facing: "west", occupied: "false", part: "foot" } });
-  safeSetBlock(startX + 8, startY + 1, startZ + 4, "oak_door", { blockStates: { facing: "east", half: "lower", hinge: "right", open: "false", powered: "false" } });
+  safeSetBlock(startX + 8, startY + 1, startZ + 4, "oak_door", { blockStates: { facing: "east", hinge: "right", open: "false", powered: "false" } });
   safeSetBlock(startX + 2, startY + 1, startZ + 5, "oak_stairs", { blockStates: { facing: "north", half: "top", shape: "straight", waterlogged: "false" } });
   safeSetBlock(startX + 3, startY + 1, startZ + 5, "oak_planks");
   safeSetBlock(startX + 4, startY + 1, startZ + 5, "oak_log", { blockStates: { axis: "y" } });
@@ -108,10 +108,8 @@ function buildCreation(startX, startY, startZ) {
   safeSetBlock(startX + 9, startY + 2, startZ + 2, "cobblestone_wall", { blockStates: { east: "none", north: "none", south: "none", up: "true", waterlogged: "false", west: "tall" } });
   safeSetBlock(startX + 2, startY + 2, startZ + 3, "sweet_berry_bush", { blockStates: { age: "3" } });
   safeSetBlock(startX + 3, startY + 2, startZ + 3, "glass", { blockStates: { east: "false", north: "true", south: "true", waterlogged: "false", west: "false" } });
-  safeSetBlock(startX + 8, startY + 2, startZ + 3, "oak_door", { blockStates: { facing: "east", half: "upper", hinge: "left", open: "false", powered: "false" } });
   safeSetBlock(startX + 2, startY + 2, startZ + 4, "sweet_berry_bush", { blockStates: { age: "3" } });
   safeSetBlock(startX + 3, startY + 2, startZ + 4, "glass", { blockStates: { east: "false", north: "true", south: "true", waterlogged: "false", west: "false" } });
-  safeSetBlock(startX + 8, startY + 2, startZ + 4, "oak_door", { blockStates: { facing: "east", half: "upper", hinge: "right", open: "false", powered: "false" } });
   safeSetBlock(startX + 2, startY + 2, startZ + 5, "oak_fence", { blockStates: { east: "true", north: "false", south: "false", waterlogged: "false", west: "false" } });
   safeSetBlock(startX + 3, startY + 2, startZ + 5, "oak_log", { blockStates: { axis: "z" } });
   safeSetBlock(startX + 4, startY + 2, startZ + 5, "brick_stairs", { blockStates: { facing: "south", half: "bottom", shape: "straight", waterlogged: "false" } });

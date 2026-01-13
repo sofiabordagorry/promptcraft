@@ -47,7 +47,7 @@ function buildCreation(startX, startY, startZ) {
   safeSetBlock(startX + 3, startY + 1, startZ + 4, "yellow_bed", { blockStates: { facing: "west", occupied: "false", part: "foot" } });
   safeSetBlock(startX + 5, startY + 1, startZ + 4, "white_terracotta");
   safeSetBlock(startX + 1, startY + 1, startZ + 5, "white_terracotta");
-  safeSetBlock(startX + 5, startY + 1, startZ + 5, "oak_door", { blockStates: { facing: "west", half: "lower", hinge: "right", open: "false", powered: "false" } });
+  safeSetBlock(startX + 5, startY + 1, startZ + 5, "oak_door", { blockStates: { facing: "west", hinge: "right", open: "false", powered: "false" } });
   safeSetBlock(startX + 1, startY + 1, startZ + 6, "white_terracotta");
   safeSetBlock(startX + 2, startY + 1, startZ + 6, "oak_stairs", { blockStates: { facing: "west", half: "bottom", shape: "straight", waterlogged: "false" } });
   safeSetBlock(startX + 3, startY + 1, startZ + 6, "oak_planks");
@@ -66,7 +66,6 @@ function buildCreation(startX, startY, startZ) {
   safeSetBlock(startX + 1, startY + 2, startZ + 4, "white_terracotta");
   safeSetBlock(startX + 5, startY + 2, startZ + 4, "white_terracotta");
   safeSetBlock(startX + 1, startY + 2, startZ + 5, "glass", { blockStates: { east: "false", north: "true", south: "true", waterlogged: "false", west: "false" } });
-  safeSetBlock(startX + 5, startY + 2, startZ + 5, "oak_door", { blockStates: { facing: "west", half: "upper", hinge: "right", open: "false", powered: "false" } });
   safeSetBlock(startX + 1, startY + 2, startZ + 6, "white_terracotta");
   safeSetBlock(startX + 5, startY + 2, startZ + 6, "white_terracotta");
   safeSetBlock(startX + 1, startY + 2, startZ + 7, "stripped_oak_log", { blockStates: { axis: "y" } });

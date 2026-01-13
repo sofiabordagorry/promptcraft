@@ -1,6 +1,6 @@
 defmodule PromptcraftBackend.Config do
   @examples_base_dir "priv/examples"
-  @style_folders ["tree", "medieval", "village", "generic_house"]
+  @style_folders ["tree", "village", "house"]
 
   def examples_base_dir, do: @examples_base_dir
 

@@ -124,7 +124,7 @@ public class ExampleMod implements ModInitializer {
                                             boolean saved = StructureExporter.saveStructureToFile(json, filename);
                                             
                                             if (saved) {
-                                                player.sendSystemMessage(Component.literal("Structure exported to: priv/examples/exported/" + filename + ".json"));
+                                                player.sendSystemMessage(Component.literal("Structure exported to: priv/examples/exported/" + filename + ".js"));
                                             } else {
                                                 player.sendSystemMessage(Component.literal("Failed to save file (check server logs)"));
                                             }

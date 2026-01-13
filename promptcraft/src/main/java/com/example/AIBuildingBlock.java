@@ -1,7 +1,6 @@
 package com.example;
 
 import com.example.structure.StructureDefinition;
-import com.example.structure.StructureLayer;
 import com.example.structure.StructureRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -66,7 +65,7 @@ public class AIBuildingBlock extends Block {
 
             if (structure == null) {
                 if (placer instanceof ServerPlayer player) {
-                    player.sendSystemMessage(Component.literal("❌ Structure not found!"));
+                    player.sendSystemMessage(Component.literal("Structure not found!"));
                 }
                 return;
             }
@@ -77,7 +76,7 @@ public class AIBuildingBlock extends Block {
         } catch (IllegalArgumentException e) {
             ExampleMod.LOGGER.error("Invalid structure UUID: {}", structureIdStr, e);
             if (placer instanceof ServerPlayer player) {
-                player.sendSystemMessage(Component.literal("❌ Invalid structure data!"));
+                player.sendSystemMessage(Component.literal("Invalid structure data!"));
             }
         }
     }
@@ -103,122 +102,101 @@ public class AIBuildingBlock extends Block {
         }
 
     private void buildStructure(ServerLevel level, BlockPos startPos, StructureDefinition structure, LivingEntity placer) {
-        Map<String, String> palette = structure.getPalette();
-        List<StructureLayer> layers = structure.getLayers();
-
-        int blocksPlaced = 0;
+        List<com.example.structure.BlockData> blocks = structure.getBlocks();
         int depth = structure.getSize().getDepth();
         
         net.minecraft.core.Direction playerFacing = placer.getDirection();
-
         Map<String, String> skipPositions = new HashMap<>();
 
         // FIRST PASS: Identify all multiblock positions that need to be skipped
-        for (StructureLayer layer : layers) {
-            int y = layer.getY();
-            List<String> rows = layer.getRows();
+        for (com.example.structure.BlockData blockData : blocks) {
+            String blockId = blockData.getBlock();
+            int x = blockData.getX();
+            int y = blockData.getY();
+            int z = blockData.getZ();
 
-            for (int z = 0; z < rows.size(); z++) {
-                String row = rows.get(z);
-                for (int x = 0; x < row.length(); x++) {
-                    char symbol = row.charAt(x);
-                    String blockId = palette.get(String.valueOf(symbol));
+            // Mark positions that Minecraft will auto-generate
+            if (isTallBlock(blockId)) {
+                String aboveKey = x + "," + (y + 1) + "," + z;
+                skipPositions.put(aboveKey, "door_top");
+            }
 
-                    if (blockId == null) continue;
-
-                    // Mark positions that Minecraft will auto-generate
-                    if (isTallBlock(blockId)) {
-                        String aboveKey = x + "," + (y + 1) + "," + z;
-                        skipPositions.put(aboveKey, "door_top");
-                    }
-
-                    if (isWideBlock(blockId)) {
-                        String nextXKey = (x + 1) + "," + y + "," + z;
-                        skipPositions.put(nextXKey, "bed_part");
-                    }
-                }
+            if (isWideBlock(blockId)) {
+                String nextXKey = (x + 1) + "," + y + "," + z;
+                skipPositions.put(nextXKey, "bed_part");
             }
         }
 
+        int blocksPlaced = 0;
+
         // SECOND PASS: Place blocks, skipping marked positions
-        for (StructureLayer layer : layers) {
-            int y = layer.getY();
-            List<String> rows = layer.getRows();
+        for (com.example.structure.BlockData blockData : blocks) {
+            int x = blockData.getX();
+            int y = blockData.getY();
+            int z = blockData.getZ();
+            String blockId = blockData.getBlockWithStates();
 
-            for (int z = 0; z < rows.size(); z++) {
-                String row = rows.get(z);
-                for (int x = 0; x < row.length(); x++) {
-                    char symbol = row.charAt(x);
-                    String blockId = palette.get(String.valueOf(symbol));
+            BlockPos targetPos = startPos.offset(x, y, z - depth + 1);
+            String posKey = x + "," + y + "," + z;
 
-                    if (blockId == null) {
-                        ExampleMod.LOGGER.warn("Symbol '{}' not found in palette", symbol);
-                        continue;
-                    }
-
-                    BlockPos targetPos = startPos.offset(x, y, z - depth + 1);
-                    String posKey = x + "," + y + "," + z;
-
-                    // Skip if this position was marked as auto-generated
-                    if (skipPositions.containsKey(posKey)) {
-                        continue;
-                    }
-
-                    // Don't place air blocks (let Minecraft handle empty space)
-                    if ("minecraft:air".equals(blockId)) {
-                        continue;
-                    }
-
-                    if (isTallBlock(blockId)) {
-                        BlockState blockState = getBlockState(blockId);
-                        if (blockState == null) {
-                            ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
-                            continue;
-                        }
-                        
-                        level.setBlockAndUpdate(targetPos, blockState
-                                .setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
-                        
-                        BlockPos topPos = targetPos.above();
-                        level.setBlockAndUpdate(topPos, blockState
-                                .setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
-                        
-                        blocksPlaced += 2;
-                        continue;
-                    }
-
-                    if (isWideBlock(blockId)) {
-                        BlockState blockState = getBlockState(blockId);
-                        if (blockState == null) {
-                            ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
-                            continue;
-                        }
-                        
-                        // Calculate head position based on player's facing direction
-                        BlockPos headPos = targetPos.relative(playerFacing);
-                        
-                        level.setBlockAndUpdate(targetPos, blockState
-                                .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.FOOT)
-                                .setValue(net.minecraft.world.level.block.BedBlock.FACING, playerFacing));
-                        
-                        level.setBlockAndUpdate(headPos, blockState
-                                .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD)
-                                .setValue(net.minecraft.world.level.block.BedBlock.FACING, playerFacing));
-                        
-                        blocksPlaced += 2;
-                        continue;
-                    }
-
-                    BlockState blockState = getBlockState(blockId);
-                    if (blockState == null) {
-                        ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
-                        continue;
-                    }
-
-                    level.setBlockAndUpdate(targetPos, blockState);
-                    blocksPlaced++;
-                }
+            // Skip if this position was marked as auto-generated
+            if (skipPositions.containsKey(posKey)) {
+                continue;
             }
+
+            // Don't place air blocks (let Minecraft handle empty space)
+            if ("minecraft:air".equals(blockId) || blockId.startsWith("minecraft:air[")) {
+                continue;
+            }
+
+            if (isTallBlock(blockId)) {
+                BlockState blockState = getBlockState(blockId);
+                if (blockState == null) {
+                    ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
+                    continue;
+                }
+                
+                level.setBlockAndUpdate(targetPos, blockState
+                        .setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
+                
+                BlockPos topPos = targetPos.above();
+                level.setBlockAndUpdate(topPos, blockState
+                        .setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+                
+                blocksPlaced += 2;
+                continue;
+            }
+
+            if (isWideBlock(blockId)) {
+                BlockState blockState = getBlockState(blockId);
+                if (blockState == null) {
+                    ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
+                    continue;
+                }
+                
+                // Calculate head position based on player's facing direction
+                BlockPos headPos = targetPos.relative(playerFacing);
+                
+                level.setBlockAndUpdate(targetPos, blockState
+                        .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.FOOT)
+                        .setValue(net.minecraft.world.level.block.BedBlock.FACING, playerFacing));
+                
+                level.setBlockAndUpdate(headPos, blockState
+                        .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD)
+                        .setValue(net.minecraft.world.level.block.BedBlock.FACING, playerFacing));
+                
+                blocksPlaced += 2;
+                continue;
+            }
+
+            BlockState blockState = getBlockState(blockId);
+            if (blockState == null) {
+                ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
+                continue;
+            }
+
+            level.setBlockAndUpdate(targetPos, blockState);
+            blocksPlaced++;
         }
 
         if (placer instanceof ServerPlayer player) {

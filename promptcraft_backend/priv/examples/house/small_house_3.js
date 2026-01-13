@@ -52,7 +52,7 @@ function buildCreation(startX, startY, startZ) {
   safeSetBlock(startX + 6, startY + 1, startZ + 5, "white_concrete");
   safeSetBlock(startX + 2, startY + 1, startZ + 6, "stripped_spruce_log", { blockStates: { axis: "y" } });
   safeSetBlock(startX + 3, startY + 1, startZ + 6, "white_concrete");
-  safeSetBlock(startX + 4, startY + 1, startZ + 6, "spruce_door", { blockStates: { facing: "south", half: "lower", hinge: "left", open: "false", powered: "false" } });
+  safeSetBlock(startX + 4, startY + 1, startZ + 6, "spruce_door", { blockStates: { facing: "south", hinge: "left", open: "false", powered: "false" } });
   safeSetBlock(startX + 5, startY + 1, startZ + 6, "white_concrete");
   safeSetBlock(startX + 6, startY + 1, startZ + 6, "stripped_spruce_log", { blockStates: { axis: "y" } });
   safeSetBlock(startX + 2, startY + 2, startZ + 2, "stripped_spruce_log", { blockStates: { axis: "y" } });
@@ -69,7 +69,6 @@ function buildCreation(startX, startY, startZ) {
   safeSetBlock(startX + 6, startY + 2, startZ + 5, "white_concrete");
   safeSetBlock(startX + 2, startY + 2, startZ + 6, "stripped_spruce_log", { blockStates: { axis: "y" } });
   safeSetBlock(startX + 3, startY + 2, startZ + 6, "white_concrete");
-  safeSetBlock(startX + 4, startY + 2, startZ + 6, "spruce_door", { blockStates: { facing: "south", half: "upper", hinge: "left", open: "false", powered: "false" } });
   safeSetBlock(startX + 5, startY + 2, startZ + 6, "white_concrete");
   safeSetBlock(startX + 6, startY + 2, startZ + 6, "stripped_spruce_log", { blockStates: { axis: "y" } });
   safeSetBlock(startX + 2, startY + 3, startZ + 2, "stripped_spruce_log", { blockStates: { axis: "y" } });

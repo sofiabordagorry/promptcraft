@@ -1,9 +1,5 @@
 package com.example;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -61,109 +57,210 @@ public class StructureExporter {
         int height = maxY - minY + 1;
         int depth = maxZ - minZ + 1;
 
-        // Scan blocks and build palette
-        Map<String, Character> blockToSymbol = new HashMap<>();
-        Map<Character, String> palette = new LinkedHashMap<>();
-        char currentSymbol = 'A';
-
-        // Reserve # for air
-        palette.put('#', "minecraft:air");
-        blockToSymbol.put("minecraft:air", '#');
-
-        // Store layers
-        List<LayerData> layers = new ArrayList<>();
-
+        // Collect all blocks with their positions
+        List<BlockData> blocks = new ArrayList<>();
+        
         for (int y = 0; y < height; y++) {
-            List<String> rows = new ArrayList<>();
-            
             for (int z = 0; z < depth; z++) {
-                StringBuilder row = new StringBuilder();
-                
                 for (int x = 0; x < width; x++) {
                     BlockPos pos = new BlockPos(minX + x, minY + y, minZ + z);
                     BlockState state = level.getBlockState(pos);
                     String blockId = getBlockStateString(state);
+                    
+                    // Skip air blocks
+                    if (!blockId.equals("minecraft:air")) {
+                        blocks.add(new BlockData(x, y, z, blockId));
+                    }
+                }
+            }
+        }
 
-                    // Get or create symbol for this block
-                    Character symbol = blockToSymbol.get(blockId);
-                    if (symbol == null) {
-                        symbol = currentSymbol++;
-                        blockToSymbol.put(blockId, symbol);
-                        palette.put(symbol, blockId);
-                        
-                        // Skip letters that might be confusing
-                        if (currentSymbol == '[' || currentSymbol == '\\' || currentSymbol == ']' || currentSymbol == '^') {
-                            currentSymbol = 'a';
+        // Generate JavaScript code
+        return generateJavaScriptCode(blocks, width, depth, height, description);
+    }
+
+    private static String generateJavaScriptCode(List<BlockData> blocks, int width, int depth, int height, String description) {
+        StringBuilder js = new StringBuilder();
+        
+        // Add description as comment
+        js.append("// ").append(description != null ? description : "Exported structure").append("\n");
+        js.append("// Size: ").append(width).append("x").append(depth).append("x").append(height).append("\n");
+        js.append("function buildCreation(startX, startY, startZ) {\n");
+        
+        // Analyze structure to use safeFill where possible
+        Map<String, List<BlockData>> blocksByType = new HashMap<>();
+        for (BlockData block : blocks) {
+            blocksByType.computeIfAbsent(block.blockId, k -> new ArrayList<>()).add(block);
+        }
+        
+        // Try to optimize with safeFill for common patterns
+        Set<BlockData> processedBlocks = new HashSet<>();
+        
+        // Look for rectangular fills
+        for (Map.Entry<String, List<BlockData>> entry : blocksByType.entrySet()) {
+            String blockType = entry.getKey();
+            List<BlockData> blocksOfType = entry.getValue();
+            
+            // Try to find rectangular regions (foundations, walls, floors)
+            List<Rectangle> rectangles = findRectangles(blocksOfType, processedBlocks);
+            
+            for (Rectangle rect : rectangles) {
+                String blockName = blockType.replace("minecraft:", "");
+                
+                if (rect.hasBlockStates()) {
+                    js.append("  safeFill(startX + ").append(rect.minX).append(", startY + ").append(rect.minY)
+                      .append(", startZ + ").append(rect.minZ).append(", startX + ").append(rect.maxX)
+                      .append(", startY + ").append(rect.maxY).append(", startZ + ").append(rect.maxZ)
+                      .append(", \"").append(blockName).append("\", {blockStates: ")
+                      .append(rect.blockStates).append("});\n");
+                } else {
+                    js.append("  safeFill(startX + ").append(rect.minX).append(", startY + ").append(rect.minY)
+                      .append(", startZ + ").append(rect.minZ).append(", startX + ").append(rect.maxX)
+                      .append(", startY + ").append(rect.maxY).append(", startZ + ").append(rect.maxZ)
+                      .append(", \"").append(blockName).append("\");\n");
+                }
+            }
+        }
+        
+        // Place remaining individual blocks
+        for (BlockData block : blocks) {
+            if (processedBlocks.contains(block)) {
+                continue;
+            }
+            
+            String blockName = block.blockId.replace("minecraft:", "");
+            String baseBlock = blockName.split("\\[")[0];
+            
+            if (block.blockId.contains("[")) {
+                // Has block states
+                String statesStr = block.blockId.substring(block.blockId.indexOf('[') + 1, block.blockId.indexOf(']'));
+                js.append("  safeSetBlock(startX + ").append(block.x).append(", startY + ").append(block.y)
+                  .append(", startZ + ").append(block.z).append(", \"").append(baseBlock)
+                  .append("\", {blockStates: {");
+                
+                String[] pairs = statesStr.split(",");
+                for (int i = 0; i < pairs.length; i++) {
+                    String[] kv = pairs[i].split("=");
+                    js.append(kv[0]).append(": \"").append(kv[1]).append("\"");
+                    if (i < pairs.length - 1) {
+                        js.append(", ");
+                    }
+                }
+                js.append("}});\n");
+            } else {
+                js.append("  safeSetBlock(startX + ").append(block.x).append(", startY + ").append(block.y)
+                  .append(", startZ + ").append(block.z).append(", \"").append(blockName).append("\");\n");
+            }
+        }
+        
+        js.append("}\n");
+        
+        return js.toString();
+    }
+
+    private static List<Rectangle> findRectangles(List<BlockData> blocks, Set<BlockData> processedBlocks) {
+        List<Rectangle> rectangles = new ArrayList<>();
+        
+        // Group blocks by Y level to find floors/ceilings
+        Map<Integer, List<BlockData>> blocksByY = new HashMap<>();
+        for (BlockData block : blocks) {
+            if (!processedBlocks.contains(block)) {
+                blocksByY.computeIfAbsent(block.y, k -> new ArrayList<>()).add(block);
+            }
+        }
+        
+        // For each Y level, try to find rectangular regions
+        for (Map.Entry<Integer, List<BlockData>> entry : blocksByY.entrySet()) {
+            int y = entry.getKey();
+            List<BlockData> levelBlocks = entry.getValue();
+            
+            // Sort by position
+            levelBlocks.sort(Comparator.comparingInt((BlockData b) -> b.z).thenComparingInt(b -> b.x));
+            
+            // Try to find filled rectangles on this level
+            for (int i = 0; i < levelBlocks.size(); i++) {
+                BlockData start = levelBlocks.get(i);
+                if (processedBlocks.contains(start)) continue;
+                
+                // Try to extend in X and Z directions
+                int maxX = start.x;
+                int maxZ = start.z;
+                
+                // Find max Z that forms a line
+                for (int j = i + 1; j < levelBlocks.size(); j++) {
+                    BlockData next = levelBlocks.get(j);
+                    if (next.x == start.x && next.z == maxZ + 1 && !processedBlocks.contains(next)) {
+                        maxZ = next.z;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Try to extend in X direction maintaining the Z range
+                boolean canExtendX = true;
+                int testX = start.x + 1;
+                while (canExtendX) {
+                    boolean foundAll = true;
+                    for (int z = start.z; z <= maxZ; z++) {
+                        boolean found = false;
+                        for (BlockData block : levelBlocks) {
+                            if (block.x == testX && block.z == z && !processedBlocks.contains(block)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            foundAll = false;
+                            break;
                         }
                     }
                     
-                    row.append(symbol);
+                    if (foundAll) {
+                        maxX = testX;
+                        testX++;
+                    } else {
+                        canExtendX = false;
+                    }
                 }
                 
-                rows.add(row.toString());
+                // If we found a rectangle of at least 2x2, use it
+                if ((maxX - start.x + 1) * (maxZ - start.z + 1) >= 4) {
+                    Rectangle rect = new Rectangle(start.x, start.x == maxX ? start.x : maxX, 
+                                                   y, y, 
+                                                   start.z, start.z == maxZ ? start.z : maxZ,
+                                                   start.blockId);
+                    rectangles.add(rect);
+                    
+                    // Mark all blocks in this rectangle as processed
+                    for (BlockData block : levelBlocks) {
+                        if (block.x >= start.x && block.x <= maxX && 
+                            block.z >= start.z && block.z <= maxZ && 
+                            block.y == y) {
+                            processedBlocks.add(block);
+                        }
+                    }
+                }
             }
-            
-            layers.add(new LayerData(y, rows));
         }
-
-        // Build JSON
-        JsonObject root = new JsonObject();
-        root.addProperty("description", description != null ? description : "Exported structure");
-
-        JsonObject structure = new JsonObject();
         
-        // Add palette
-        JsonObject paletteJson = new JsonObject();
-        for (Map.Entry<Character, String> entry : palette.entrySet()) {
-            paletteJson.addProperty(String.valueOf(entry.getKey()), entry.getValue());
-        }
-        structure.add("palette", paletteJson);
-
-        // Add size
-        JsonObject size = new JsonObject();
-        size.addProperty("width", width);
-        size.addProperty("depth", depth);
-        size.addProperty("height", height);
-        structure.add("size", size);
-
-        // Add layers
-        JsonArray layersJson = new JsonArray();
-        for (LayerData layer : layers) {
-            JsonObject layerJson = new JsonObject();
-            layerJson.addProperty("y", layer.y);
-            
-            JsonArray rowsJson = new JsonArray();
-            for (String row : layer.rows) {
-                rowsJson.add(row);
-            }
-            layerJson.add("rows", rowsJson);
-            
-            layersJson.add(layerJson);
-        }
-        structure.add("layers", layersJson);
-
-        root.add("structure", structure);
-
-        // Convert to pretty JSON string
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(root);
+        return rectangles;
     }
 
-    public static boolean saveStructureToFile(String json, String filename) {
+    public static boolean saveStructureToFile(String jsCode, String filename) {
         try {
             Path exportDir = Paths.get("../../promptcraft_backend/priv/examples/exported");
             Files.createDirectories(exportDir);
             
             // Clean filename (remove special characters)
             String cleanFilename = filename.replaceAll("[^a-zA-Z0-9_-]", "_").toLowerCase();
-            if (!cleanFilename.endsWith(".json")) {
-                cleanFilename += ".json";
+            if (!cleanFilename.endsWith(".js")) {
+                cleanFilename += ".js";
             }
             
             Path filePath = exportDir.resolve(cleanFilename);
             
-            // Write JSON to file
-            Files.writeString(filePath, json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            // Write JavaScript to file
+            Files.writeString(filePath, jsCode, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             
             ExampleMod.LOGGER.info("Structure saved to: {}", filePath.toAbsolutePath());
             return true;
@@ -196,13 +293,58 @@ public class StructureExporter {
         return blockId + "[" + props.toString() + "]";
     }
 
-    private static class LayerData {
-        final int y;
-        final List<String> rows;
+    private static class BlockData {
+        final int x, y, z;
+        final String blockId;
 
-        LayerData(int y, List<String> rows) {
+        BlockData(int x, int y, int z, String blockId) {
+            this.x = x;
             this.y = y;
-            this.rows = rows;
+            this.z = z;
+            this.blockId = blockId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            BlockData blockData = (BlockData) o;
+            return x == blockData.x && y == blockData.y && z == blockData.z;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y, z);
+        }
+    }
+
+    private static class Rectangle {
+        final int minX, maxX, minY, maxY, minZ, maxZ;
+        final String blockId;
+        final String blockStates;
+
+        Rectangle(int minX, int maxX, int minY, int maxY, int minZ, int maxZ, String blockId) {
+            this.minX = minX;
+            this.maxX = maxX;
+            this.minY = minY;
+            this.maxY = maxY;
+            this.minZ = minZ;
+            this.maxZ = maxZ;
+            this.blockId = blockId;
+            
+            // Extract block states if present
+            if (blockId.contains("[")) {
+                this.blockStates = "{" + blockId.substring(blockId.indexOf('[') + 1, blockId.indexOf(']'))
+                    .replace("=", ": \"")
+                    .replace(",", "\", ")
+                    + "\"}";
+            } else {
+                this.blockStates = null;
+            }
+        }
+
+        boolean hasBlockStates() {
+            return blockStates != null;
         }
     }
 }

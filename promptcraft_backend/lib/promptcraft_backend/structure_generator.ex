@@ -221,84 +221,6 @@ defmodule PromptcraftBackend.StructureGenerator do
     • IMPORTANT: Do NOT fill large volumes with blocks - only place what you need
     • Interior of buildings should be AIR (empty) - don't fill it with blocks
 
-    WALL CONSTRUCTION (CRITICAL):
-    • Build each wall separately, one block thick
-    • Walls MUST reach the same height as corner posts (if posts go to y+4, walls go to y+4)
-    • DO NOT leave gaps between wall segments and corner posts
-    • Build walls in segments around doors/windows, but fill ALL spaces
-
-    Example for 7x7 house with 4-block tall walls:
-    ```javascript
-    // Corner posts (y+1 to y+4)
-    safeFill(startX, startY+1, startZ, startX, startY+4, startZ, "oak_log");
-    safeFill(startX+6, startY+1, startZ, startX+6, startY+4, startZ, "oak_log");
-
-    // Front wall (z=0) - MUST go to y+4 to match posts
-    safeFill(startX+1, startY+1, startZ, startX+2, startY+4, startZ, "oak_planks"); // Left of door
-    safeFill(startX+4, startY+1, startZ, startX+5, startY+4, startZ, "oak_planks"); // Right of door
-    safeFill(startX+3, startY+2, startZ, startX+3, startY+4, startZ, "oak_planks"); // Above door
-    safeSetBlock(startX+3, startY+1, startZ, "oak_door");
-    // Windows
-    safeFill(startX+1, startY+2, startZ, startX+1, startY+3, startZ, "glass");
-    safeFill(startX+5, startY+2, startZ, startX+5, startY+3, startZ, "glass");
-    ```
-
-    KEY POINTS:
-    • Fill space ABOVE doors (from y+2 upward)
-    • Walls touch corner posts with no gaps
-    • All segments reach the top height
-    • ALWAYS ensure interior is hollow/empty
-    • For multi-story buildings, place floors between levels:
-      safeFill(startX+1, startY+4, startZ+1, startX+5, startY+4, startZ+5, "oak_planks");
-    • Leave space for stairs/ladders to connect floors
-
-    WINDOWS (IMPORTANT):
-    • Make windows 2-3 blocks tall (y+2 to y+3 or y+2 to y+4)
-    • Windows can be 1-2 blocks wide
-    • Place at eye level (y+2 and above)
-    • Every house needs at least 3-4 windows on different walls
-    • Example: safeFill(startX+1, startY+2, startZ, startX+2, startY+3, startZ, "glass");
-
-    ROOF CONSTRUCTION (CRITICAL - READ CAREFULLY):
-    • NEVER use safeFill for an entire roof with one facing direction
-    • Stairs must face TOWARDS the center of the building (pointing inward)
-    • Most roofs slope from side to side (east-west), not front to back
-    • EACH ROOF LAYER MUST BE COMPLETELY FILLED - stairs on edges, planks in middle
-    • NO EMPTY SPACES between wall top and roof, or between roof layers
-
-    CRITICAL RULE: Every roof layer = stairs on sides + planks filling the middle
-    - Layer 1: stairs at x=0 and x=width, planks fill x=1 to x=width-1
-    - Layer 2: stairs at x=1 and x=width-1, planks fill x=2 to x=width-2
-    - Continue pattern until peak
-
-    CORRECT roof example (9x9 house with walls/posts ending at y+4):
-    ```javascript
-    // Corner posts and walls end at y+4
-    safeFill(startX, startY+1, startZ, startX, startY+4, startZ, "oak_log");
-    safeFill(startX+1, startY+1, startZ, startX+7, startY+4, startZ, "oak_planks");
-
-    // ROOF LAYER 1 at y+5 (MUST BE COMPLETELY FILLED)
-    safeFill(startX, startY+5, startZ, startX, startY+5, startZ+8, "oak_stairs", {blockStates: {facing: "east", half: "bottom"}});
-    safeFill(startX+8, startY+5, startZ, startX+8, startY+5, startZ+8, "oak_stairs", {blockStates: {facing: "west", half: "bottom"}});
-    safeFill(startX+1, startY+5, startZ, startX+7, startY+5, startZ+8, "oak_planks"); // FILLS MIDDLE - NO GAPS
-
-    // ROOF LAYER 2 at y+6 (ALSO COMPLETELY FILLED)
-    safeFill(startX+1, startY+6, startZ, startX+1, startY+6, startZ+8, "oak_stairs", {blockStates: {facing: "east", half: "bottom"}});
-    safeFill(startX+7, startY+6, startZ, startX+7, startY+6, startZ+8, "oak_stairs", {blockStates: {facing: "west", half: "bottom"}});
-    safeFill(startX+2, startY+6, startZ, startX+6, startY+6, startZ+8, "oak_planks"); // FILLS MIDDLE
-
-    // ROOF LAYER 3 at y+7 (peak)
-    safeFill(startX+2, startY+7, startZ, startX+2, startY+7, startZ+8, "oak_stairs", {blockStates: {facing: "east", half: "bottom"}});
-    safeFill(startX+6, startY+7, startZ, startX+6, startY+7, startZ+8, "oak_stairs", {blockStates: {facing: "west", half: "bottom"}});
-    safeFill(startX+3, startY+7, startZ, startX+5, startY+7, startZ+8, "oak_planks"); // FILLS MIDDLE
-    ```
-
-    WRONG examples (DO NOT DO THIS):
-    safeFill(startX, startY+4, startZ, startX+4, startY+4, startZ, "oak_stairs", {blockStates: {facing: "north"}});
-    Stairs on north/south edges - roofs slope EAST-WEST not NORTH-SOUTH
-    Using same facing for entire roof perimeter
-    Missing half: "bottom" in stairs blockStates
-
     BLOCK ORIENTATION:
     • Doors: facing should point AWAY from wall (into the room)
       - Front door on south wall (z=0): facing: "south"
@@ -307,60 +229,20 @@ defmodule PromptcraftBackend.StructureGenerator do
       - Place foot first, then head in direction of facing
     • Chests/Furnaces: Always specify facing direction
     • Logs: Specify axis: "x", "y", or "z" (y for vertical posts)
-
-    MULTI-STORY BUILDINGS (CRITICAL FOR 2+ FLOORS):
-
-    For buildings with multiple floors, follow this EXACT pattern:
-
-    ```javascript
-    // Example: 7x7 two-story house
-
-    // 1. CORNER POSTS - Must extend through ALL floors
-    safeFill(startX, startY+1, startZ, startX, startY+7, startZ, "oak_log"); // Goes to top of 2nd floor
-
-    // 2. FIRST FLOOR WALLS (y+1 to y+3)
-    safeFill(startX+1, startY+1, startZ, startX+5, startY+3, startZ, "oak_planks");
-    // Add door at y+1, windows at y+2
-
-    // 3. FLOOR SEPARATOR at y+4 - LEAVE HOLE for stairs
-    safeFill(startX+1, startY+4, startZ+1, startX+5, startY+4, startZ+3, "oak_planks"); // Front section
-    safeFill(startX+3, startY+4, startZ+4, startX+5, startY+4, startZ+5, "oak_planks"); // Back section
-    // Gap at (startX+1 to startX+2, startZ+4 to startZ+5) for stairs
-
-    // 4. STAIRS connecting floors - diagonal placement
-    safeSetBlock(startX+1, startY+1, startZ+5, "oak_stairs", {blockStates: {facing: "east", half: "bottom"}});
-    safeSetBlock(startX+2, startY+2, startZ+5, "oak_stairs", {blockStates: {facing: "east", half: "bottom"}});
-    safeSetBlock(startX+3, startY+3, startZ+5, "oak_stairs", {blockStates: {facing: "east", half: "bottom"}});
-    safeSetBlock(startX+4, startY+4, startZ+5, "oak_stairs", {blockStates: {facing: "east", half: "bottom"}});
-    // Each stair is one block higher and one block forward
-
-    // 5. SECOND FLOOR WALLS (y+5 to y+7)
-    safeFill(startX+1, startY+5, startZ, startX+5, startY+7, startZ, "oak_planks");
-    // Add windows at y+6
-
-    // 6. ROOF starts at y+8
-    ```
-
-    KEY RULES for multi-story:
-    • Corner posts extend through ALL floors (if 2 floors with 3-block walls each, posts go to y+7)
-    • Each floor has 3-4 blocks of height for walls
-    • Floor separator placed with HOLE for stairs (don't block access!)
-    • Stairs placed DIAGONALLY - each step is +1 Y and +1 X (or +1 Z)
-    • Second floor walls start ABOVE the floor separator (y+5 if separator is y+4)
-    • Windows on each floor at appropriate heights
+    • Stairs: Always specify facing and half: "bottom" or "top"
 
     ═══════════════════════════════════════════════════════════════════════════════
-    ARCHITECTURAL RULES - FOLLOW THESE CAREFULLY
+    GENERAL ARCHITECTURAL RULES
     ═══════════════════════════════════════════════════════════════════════════════
 
-    1. PROPORTIONS: Small houses 5x5-7x7, Medium 7x7-11x11, Large 11x11-16x16, Towers 3x3-5x5 tall
-    2. ALWAYS place solid foundation at y=0
-    3. Use logs at corners for structure, hollow mode for walls
-    4. Windows at y=2 (eye level), doors at y=1
-    5. Roofs: Use stairs for slopes, should be 30-50% of wall height
-    6. Material variety: 1-2 main blocks, 1-2 accents, max 5-7 types total
-    7. Trees: Trunk at center, canopy proportional to height
-    8. NO floating structures, NO walls without thickness, NO asymmetry without purpose
+    1. PROPORTIONS: Follow style-specific guidelines (see style prompts below)
+    2. FOUNDATION: Always place solid foundation at startY (y=0)
+    3. STRUCTURE: Use appropriate materials for corners/structural elements
+    4. DETAILS: Windows at y+2 (eye level), doors at y+1
+    5. ROOFS: Use stairs for slopes when appropriate (houses, buildings)
+    6. MATERIALS: 1-2 main blocks, 1-2 accents, max 5-7 types total for cohesion
+    7. PHYSICS: NO floating structures, ensure proper support
+    8. AESTHETICS: Consider symmetry/asymmetry based on structure type
 
     ═══════════════════════════════════════════════════════════════════════════════
     LEARNING FROM EXAMPLES
@@ -415,8 +297,10 @@ defmodule PromptcraftBackend.StructureGenerator do
 
     with {:ok, raw} <- call_llm(messages),
          {:ok, %{"code" => js_code}} <- parse_js_response(raw),
-         {:ok, blocks} <- PromptcraftBackend.JsExecutor.execute(js_code),
-         {:ok, structure} <- blocks_to_structure(blocks) do
+         {:ok, blocks} <- PromptcraftBackend.JsExecutor.execute(js_code) do
+      # Calculate structure size
+      structure = blocks_to_simple_structure(blocks)
+
       # Debug: Save generated structure and JS code
       save_debug_output(prompt, js_code, blocks, structure, raw)
       {:ok, structure}
@@ -468,9 +352,12 @@ defmodule PromptcraftBackend.StructureGenerator do
     end
   end
 
-  defp blocks_to_structure(blocks) do
+  defp blocks_to_simple_structure(blocks) do
     if Enum.empty?(blocks) do
-      {:error, :no_blocks}
+      %{
+        "blocks" => [],
+        "size" => %{"width" => 0, "depth" => 0, "height" => 0}
+      }
     else
       xs = Enum.map(blocks, & &1.x)
       ys = Enum.map(blocks, & &1.y)
@@ -487,87 +374,34 @@ defmodule PromptcraftBackend.StructureGenerator do
       depth = max_z - min_z + 1
       height = max_y - min_y + 1
 
-      block_map =
+      # Normalize blocks to start at (0,0,0)
+      normalized_blocks =
         blocks
         |> Enum.map(fn b ->
-          pos = {b.x - min_x, b.y - min_y, b.z - min_z}
-          block_str = format_block(b.block, b.block_states)
-          {pos, block_str}
+          %{
+            "x" => b.x - min_x,
+            "y" => b.y - min_y,
+            "z" => b.z - min_z,
+            "block" => b.block,
+            "block_states" => b.block_states || %{}
+          }
         end)
-        |> Enum.into(%{})
 
-      unique_blocks = block_map |> Map.values() |> Enum.uniq()
-
-      palette =
-        unique_blocks
-        |> Enum.with_index()
-        |> Enum.map(fn {block, idx} ->
-          char =
-            if block == "minecraft:air" do
-              "#"
-            else
-              cond do
-                idx < 26 -> <<65 + idx>>
-                idx < 52 -> <<97 + (idx - 26)>>
-                idx < 62 -> <<48 + (idx - 52)>>
-                true -> "@"
-              end
-            end
-
-          {char, block}
-        end)
-        |> Enum.into(%{})
-
-      block_to_char = palette |> Enum.map(fn {k, v} -> {v, k} end) |> Enum.into(%{})
-
-      layers =
-        for y <- 0..(height - 1) do
-          rows =
-            for z <- 0..(depth - 1) do
-              row =
-                for x <- 0..(width - 1) do
-                  block = Map.get(block_map, {x, y, z}, "minecraft:air")
-                  Map.get(block_to_char, block, "#")
-                end
-                |> Enum.join("")
-
-              row
-            end
-
-          %{"y" => y, "rows" => rows}
-        end
-
-      {:ok,
-       %{
-         "palette" => palette,
-         "size" => %{"width" => width, "depth" => depth, "height" => height},
-         "layers" => layers
-       }}
+      %{
+        "blocks" => normalized_blocks,
+        "size" => %{"width" => width, "depth" => depth, "height" => height}
+      }
     end
   end
-
-  defp format_block(block_name, block_states)
-       when is_map(block_states) and map_size(block_states) > 0 do
-    states_str =
-      block_states
-      |> Enum.sort()
-      |> Enum.map(fn {k, v} -> "#{k}=#{v}" end)
-      |> Enum.join(",")
-
-    "#{block_name}[#{states_str}]"
-  end
-
-  defp format_block(block_name, _), do: block_name
 
   defp call_llm(messages) do
     api_key = System.fetch_env!("OPENAI_API_KEY")
 
     body = %{
-      "model" => "gpt-4o",
+      "model" => "gpt-5.2",
       "messages" => messages,
       "temperature" => 0.4,
       "top_p" => 0.9,
-      "max_tokens" => 2500
     }
 
     case Req.post("https://api.openai.com/v1/chat/completions",
@@ -575,7 +409,9 @@ defmodule PromptcraftBackend.StructureGenerator do
            headers: [
              {"authorization", "Bearer #{api_key}"},
              {"content-type", "application/json"}
-           ]
+           ],
+           receive_timeout: 120_000,
+           connect_options: [timeout: 30_000]
          ) do
       {:ok, %Req.Response{status: 200, body: %{"choices" => [choice | _]}}} ->
         content = get_in(choice, ["message", "content"])
@@ -591,9 +427,8 @@ defmodule PromptcraftBackend.StructureGenerator do
 
     style_keywords = %{
       "tree" => ["tree", "oak", "birch", "spruce", "jungle", "acacia", "dark oak", "cherry"],
-      "medieval" => ["medieval", "castle", "tower", "fortress", "keep"],
       "village" => ["village", "well", "town"],
-      "generic_house" => ["house", "home", "cottage", "building"]
+      "house" => ["house", "home", "cottage", "building"]
     }
 
     # Check each style's keywords

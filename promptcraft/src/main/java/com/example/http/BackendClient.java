@@ -2,7 +2,6 @@ package com.example.http;
 
 import com.example.ExampleMod;
 import com.example.structure.StructureDefinition;
-import com.example.structure.StructureLayer;
 import com.example.structure.StructureSize;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -43,7 +42,7 @@ public class BackendClient {
                         .uri(URI.create(BACKEND_URL))
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                        .timeout(Duration.ofSeconds(30))
+                        .timeout(Duration.ofMinutes(3))
                         .build();
 
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -64,13 +63,6 @@ public class BackendClient {
     private static StructureDefinition parseStructure(String json) {
         JsonObject root = gson.fromJson(json, JsonObject.class);
 
-        // Parse palette
-        JsonObject paletteJson = root.getAsJsonObject("palette");
-        Map<String, String> palette = new HashMap<>();
-        for (String key : paletteJson.keySet()) {
-            palette.put(key, paletteJson.get(key).getAsString());
-        }
-
         // Parse size
         JsonObject sizeJson = root.getAsJsonObject("size");
         StructureSize size = new StructureSize(
@@ -79,20 +71,27 @@ public class BackendClient {
                 sizeJson.get("height").getAsInt()
         );
 
-        // Parse layers
-        JsonArray layersJson = root.getAsJsonArray("layers");
-        List<StructureLayer> layers = new ArrayList<>();
-        for (int i = 0; i < layersJson.size(); i++) {
-            JsonObject layerJson = layersJson.get(i).getAsJsonObject();
-            int y = layerJson.get("y").getAsInt();
-            JsonArray rowsJson = layerJson.getAsJsonArray("rows");
-            List<String> rows = new ArrayList<>();
-            for (int j = 0; j < rowsJson.size(); j++) {
-                rows.add(rowsJson.get(j).getAsString());
+        // Parse blocks
+        JsonArray blocksJson = root.getAsJsonArray("blocks");
+        List<com.example.structure.BlockData> blocks = new ArrayList<>();
+        for (int i = 0; i < blocksJson.size(); i++) {
+            JsonObject blockJson = blocksJson.get(i).getAsJsonObject();
+            int x = blockJson.get("x").getAsInt();
+            int y = blockJson.get("y").getAsInt();
+            int z = blockJson.get("z").getAsInt();
+            String block = blockJson.get("block").getAsString();
+            
+            Map<String, String> blockStates = new HashMap<>();
+            if (blockJson.has("block_states")) {
+                JsonObject statesJson = blockJson.getAsJsonObject("block_states");
+                for (String key : statesJson.keySet()) {
+                    blockStates.put(key, statesJson.get(key).getAsString());
+                }
             }
-            layers.add(new StructureLayer(y, rows));
+            
+            blocks.add(new com.example.structure.BlockData(x, y, z, block, blockStates));
         }
 
-        return new StructureDefinition(palette, size, layers);
+        return new StructureDefinition(blocks, size);
     }
 }

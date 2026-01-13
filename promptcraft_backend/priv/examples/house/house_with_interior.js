@@ -27,8 +27,7 @@ function buildCreation(startX, startY, startZ) {
   safeFill(startX + 6, startY + 3, startZ + 1, startX + 6, startY + 3, startZ + 5, "oak_planks");
 
   // Door (front wall, centered)
-  safeSetBlock(startX + 3, startY + 1, startZ, "oak_door", { blockStates: { facing: "south", half: "lower" } });
-  safeSetBlock(startX + 3, startY + 2, startZ, "oak_door", { blockStates: { facing: "south", half: "upper" } });
+  safeSetBlock(startX + 3, startY + 1, startZ, "oak_door", { blockStates: { facing: "south" } });
 
   // Windows
   safeSetBlock(startX + 2, startY + 2, startZ, "glass");
