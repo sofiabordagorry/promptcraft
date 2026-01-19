@@ -1,0 +1,52 @@
+// living_room_1
+// Size: 9x12x4
+function buildCreation(startX, startY, startZ) {
+  safeSetBlock(startX + 2, startY + 0, startZ + 1, "oak_wall_sign", {blockStates: {facing: "north", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 1, "dark_oak_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 1, "dark_oak_stairs", {blockStates: {facing: "south", half: "top", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 1, "dark_oak_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 1, startY + 0, startZ + 2, "oak_wall_sign", {blockStates: {facing: "west", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 2, "barrel", {blockStates: {facing: "up", open: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 2, "oak_wall_sign", {blockStates: {facing: "east", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 2, "dark_oak_stairs", {blockStates: {facing: "west", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 2, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 2, "dark_oak_stairs", {blockStates: {facing: "east", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 3, "oak_wall_sign", {blockStates: {facing: "south", waterlogged: "false"}});
+  safeSetBlock(startX + 1, startY + 0, startZ + 4, "dark_oak_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 4, "dark_oak_stairs", {blockStates: {facing: "north", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 4, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 4, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 4, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 1, startY + 0, startZ + 5, "dark_oak_stairs", {blockStates: {facing: "east", half: "top", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 5, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 5, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 5, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 5, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 1, startY + 0, startZ + 6, "dark_oak_stairs", {blockStates: {facing: "east", half: "top", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 6, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 6, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 6, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 6, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 1, startY + 0, startZ + 7, "dark_oak_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 7, "dark_oak_stairs", {blockStates: {facing: "south", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 7, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 7, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 7, "spruce_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 8, "oak_wall_sign", {blockStates: {facing: "north", waterlogged: "false"}});
+  safeSetBlock(startX + 1, startY + 0, startZ + 9, "oak_wall_sign", {blockStates: {facing: "west", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 9, "barrel", {blockStates: {facing: "up", open: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 9, "oak_wall_sign", {blockStates: {facing: "east", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 9, "dark_oak_stairs", {blockStates: {facing: "west", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 9, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 9, "dark_oak_stairs", {blockStates: {facing: "east", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 10, "oak_wall_sign", {blockStates: {facing: "south", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 10, "dark_oak_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 10, "dark_oak_stairs", {blockStates: {facing: "north", half: "top", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 10, "dark_oak_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 1, startZ + 1, "dark_oak_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "false", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 2, "potted_flowering_azalea_bush");
+  safeSetBlock(startX + 1, startY + 1, startZ + 5, "dark_oak_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "false", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 1, startY + 1, startZ + 6, "dark_oak_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "false", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 9, "potted_flowering_azalea_bush");
+  safeSetBlock(startX + 5, startY + 1, startZ + 10, "dark_oak_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "false", powered: "false", waterlogged: "false"}});
+}

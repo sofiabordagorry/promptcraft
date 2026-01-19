@@ -1,0 +1,51 @@
+// desk_3
+// Size: 8x8x7
+function buildCreation(startX, startY, startZ) {
+  safeFill(startX + 2, startY + 0, startZ + 2, startX + 2, startY + 0, startZ + 6, "smooth_sandstone");
+  safeFill(startX + 2, startY + 4, startZ + 2, startX + 2, startY + 4, startZ + 6, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 0, startZ + 3, "mud_brick_wall", {blockStates: {east: "tall", north: "none", south: "none", up: "false", waterlogged: "false", west: "tall"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 3, "mud_brick_wall", {blockStates: {east: "none", north: "none", south: "none", up: "true", waterlogged: "false", west: "tall"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 3, "bamboo_wall_sign", {blockStates: {facing: "north", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 4, "birch_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 4, "bamboo_trapdoor", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 5, "mud_brick_wall", {blockStates: {east: "tall", north: "none", south: "none", up: "false", waterlogged: "false", west: "tall"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 5, "mud_brick_wall", {blockStates: {east: "none", north: "none", south: "none", up: "true", waterlogged: "false", west: "tall"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 5, "bamboo_wall_sign", {blockStates: {facing: "south", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 2, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 1, startZ + 2, "oak_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 3, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "true", slot_1_occupied: "false", slot_2_occupied: "false", slot_3_occupied: "false", slot_4_occupied: "false", slot_5_occupied: "false"}});
+  safeSetBlock(startX + 3, startY + 1, startZ + 3, "oak_stairs", {blockStates: {facing: "south", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 1, startZ + 3, "oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 4, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "true", slot_1_occupied: "true", slot_2_occupied: "true", slot_3_occupied: "false", slot_4_occupied: "false", slot_5_occupied: "false"}});
+  safeSetBlock(startX + 3, startY + 1, startZ + 4, "oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 1, startZ + 4, "oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 1, startZ + 4, "blue_wall_banner", {blockStates: {facing: "west"}});
+  safeSetBlock(startX + 6, startY + 1, startZ + 4, "bamboo_trapdoor", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 5, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "false", slot_1_occupied: "true", slot_2_occupied: "true", slot_3_occupied: "false", slot_4_occupied: "false", slot_5_occupied: "false"}});
+  safeSetBlock(startX + 3, startY + 1, startZ + 5, "oak_stairs", {blockStates: {facing: "north", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 1, startZ + 5, "oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 6, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 1, startZ + 6, "oak_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 2, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 2, startZ + 2, "oak_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 3, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "false", slot_1_occupied: "true", slot_2_occupied: "true", slot_3_occupied: "true", slot_4_occupied: "true", slot_5_occupied: "true"}});
+  safeSetBlock(startX + 3, startY + 2, startZ + 3, "oak_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 4, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "true", slot_1_occupied: "false", slot_2_occupied: "true", slot_3_occupied: "true", slot_4_occupied: "true", slot_5_occupied: "true"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 5, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "true", slot_1_occupied: "true", slot_2_occupied: "true", slot_3_occupied: "true", slot_4_occupied: "true", slot_5_occupied: "true"}});
+  safeSetBlock(startX + 3, startY + 2, startZ + 5, "oak_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 6, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 2, startZ + 6, "oak_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 2, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 3, startZ + 2, "oak_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 3, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "false", slot_1_occupied: "false", slot_2_occupied: "false", slot_3_occupied: "true", slot_4_occupied: "false", slot_5_occupied: "false"}});
+  safeSetBlock(startX + 3, startY + 3, startZ + 3, "oak_stairs", {blockStates: {facing: "south", half: "top", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 4, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "false", slot_1_occupied: "false", slot_2_occupied: "false", slot_3_occupied: "true", slot_4_occupied: "true", slot_5_occupied: "false"}});
+  safeSetBlock(startX + 3, startY + 3, startZ + 4, "oak_slab", {blockStates: {type: "top", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 5, "chiseled_bookshelf", {blockStates: {facing: "east", slot_0_occupied: "false", slot_1_occupied: "false", slot_2_occupied: "false", slot_3_occupied: "false", slot_4_occupied: "false", slot_5_occupied: "true"}});
+  safeSetBlock(startX + 3, startY + 3, startZ + 5, "oak_stairs", {blockStates: {facing: "north", half: "top", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 6, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 3, startZ + 6, "oak_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 4, startZ + 3, "turtle_egg", {blockStates: {eggs: "2", hatch: "0"}});
+  safeSetBlock(startX + 3, startY + 4, startZ + 4, "brown_candle", {blockStates: {candles: "3", lit: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 4, startZ + 5, "potted_azalea_bush");
+}

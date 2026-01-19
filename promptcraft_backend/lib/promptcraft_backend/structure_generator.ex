@@ -220,6 +220,7 @@ defmodule PromptcraftBackend.StructureGenerator do
     • NEVER use mode: "hollow" - it causes errors. Build walls individually instead
     • IMPORTANT: Do NOT fill large volumes with blocks - only place what you need
     • Interior of buildings should be AIR (empty) - don't fill it with blocks
+    • NEVER use "air" blocks to create door/window openings - build wall segments that skip those positions instead
 
     BLOCK ORIENTATION:
     • Doors: facing should point AWAY from wall (into the room)

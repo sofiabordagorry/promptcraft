@@ -1,0 +1,51 @@
+// television_3
+// Size: 6x8x7
+function buildCreation(startX, startY, startZ) {
+  safeFill(startX + 3, startY + 2, startZ + 2, startX + 3, startY + 2, startZ + 5, "black_concrete_powder");
+  safeFill(startX + 3, startY + 3, startZ + 2, startX + 3, startY + 3, startZ + 5, "black_concrete_powder");
+  safeFill(startX + 3, startY + 0, startZ + 2, startX + 3, startY + 0, startZ + 5, "acacia_trapdoor[facing=west,half=top,open=false,powered=false,waterlogged=false]", {blockStates: {facing: "west", half: "top", open: "false", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 1, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 0, startZ + 1, "jungle_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 2, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 3, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 0, startZ + 4, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 5, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 0, startZ + 6, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 6, "jungle_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 1, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 1, startZ + 2, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 3, startY + 1, startZ + 2, "mangrove_trapdoor", {blockStates: {facing: "west", half: "top", open: "false", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 3, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 1, startZ + 3, "mangrove_slab", {blockStates: {type: "top", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 4, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 3, startY + 1, startZ + 4, "mangrove_slab", {blockStates: {type: "top", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 5, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 1, startZ + 5, "mangrove_trapdoor", {blockStates: {facing: "west", half: "top", open: "false", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 6, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 1, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 2, startZ + 2, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 3, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 2, startZ + 4, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 5, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 2, startZ + 6, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 1, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 3, startZ + 2, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 3, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 3, startZ + 4, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 3, startZ + 5, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 3, startZ + 6, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 4, startZ + 1, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 4, startZ + 2, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 4, startZ + 3, "smooth_sandstone");
+  safeSetBlock(startX + 3, startY + 4, startZ + 3, "lever", {blockStates: {face: "FLOOR", facing: "south", powered: "false"}});
+  safeSetBlock(startX + 2, startY + 4, startZ + 4, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 3, startY + 4, startZ + 4, "lever", {blockStates: {face: "FLOOR", facing: "north", powered: "false"}});
+  safeSetBlock(startX + 2, startY + 4, startZ + 5, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 4, startZ + 6, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 5, startZ + 1, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 5, startZ + 2, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 5, startZ + 3, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 5, startZ + 4, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+  safeSetBlock(startX + 2, startY + 5, startZ + 5, "smooth_sandstone");
+  safeSetBlock(startX + 2, startY + 5, startZ + 6, "stripped_jungle_wood", {blockStates: {axis: "y"}});
+}

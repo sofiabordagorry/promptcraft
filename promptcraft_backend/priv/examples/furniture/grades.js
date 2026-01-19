@@ -1,0 +1,50 @@
+// grades
+// Size: 8x21x5
+function buildCreation(startX, startY, startZ) {
+  safeFill(startX + 3, startY + 1, startZ + 8, startX + 3, startY + 1, startZ + 11, "spruce_trapdoor[facing=north,half=bottom,open=false,powered=false,waterlogged=false]", {blockStates: {facing: "north", half: "bottom", open: "false", powered: "false", waterlogged: "false"}});
+  safeFill(startX + 3, startY + 1, startZ + 15, startX + 3, startY + 1, startZ + 18, "spruce_trapdoor[facing=north,half=bottom,open=false,powered=false,waterlogged=false]", {blockStates: {facing: "north", half: "bottom", open: "false", powered: "false", waterlogged: "false"}});
+  safeFill(startX + 2, startY + 0, startZ + 1, startX + 2, startY + 0, startZ + 4, "spruce_fence_gate[facing=north,in_wall=false,open=false,powered=false]", {blockStates: {facing: "north", in_wall: "false", open: "false", powered: "false"}});
+  safeFill(startX + 2, startY + 0, startZ + 8, startX + 2, startY + 0, startZ + 11, "spruce_fence_gate[facing=north,in_wall=false,open=false,powered=false]", {blockStates: {facing: "north", in_wall: "false", open: "false", powered: "false"}});
+  safeFill(startX + 2, startY + 0, startZ + 15, startX + 2, startY + 0, startZ + 18, "spruce_fence_gate[facing=north,in_wall=false,open=false,powered=false]", {blockStates: {facing: "north", in_wall: "false", open: "false", powered: "false"}});
+  safeFill(startX + 4, startY + 1, startZ + 1, startX + 4, startY + 1, startZ + 4, "spruce_wall_sign[facing=east,waterlogged=false]", {blockStates: {facing: "east", waterlogged: "false"}});
+  safeFill(startX + 4, startY + 1, startZ + 8, startX + 4, startY + 1, startZ + 11, "spruce_wall_sign[facing=east,waterlogged=false]", {blockStates: {facing: "east", waterlogged: "false"}});
+  safeFill(startX + 4, startY + 1, startZ + 15, startX + 4, startY + 1, startZ + 18, "spruce_wall_sign[facing=east,waterlogged=false]", {blockStates: {facing: "east", waterlogged: "false"}});
+  safeFill(startX + 2, startY + 2, startZ + 1, startX + 2, startY + 2, startZ + 4, "spruce_trapdoor[facing=east,half=bottom,open=true,powered=false,waterlogged=false]", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeFill(startX + 2, startY + 2, startZ + 8, startX + 2, startY + 2, startZ + 11, "spruce_trapdoor[facing=east,half=bottom,open=true,powered=false,waterlogged=false]", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeFill(startX + 2, startY + 2, startZ + 15, startX + 2, startY + 2, startZ + 18, "spruce_trapdoor[facing=east,half=bottom,open=true,powered=false,waterlogged=false]", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeFill(startX + 4, startY + 0, startZ + 1, startX + 4, startY + 0, startZ + 4, "spruce_slab[type=top,waterlogged=false]", {blockStates: {type: "top", waterlogged: "false"}});
+  safeFill(startX + 4, startY + 0, startZ + 8, startX + 4, startY + 0, startZ + 11, "spruce_slab[type=top,waterlogged=false]", {blockStates: {type: "top", waterlogged: "false"}});
+  safeFill(startX + 4, startY + 0, startZ + 15, startX + 4, startY + 0, startZ + 18, "spruce_slab[type=top,waterlogged=false]", {blockStates: {type: "top", waterlogged: "false"}});
+  safeFill(startX + 2, startY + 1, startZ + 1, startX + 2, startY + 1, startZ + 4, "spruce_slab[type=top,waterlogged=false]", {blockStates: {type: "top", waterlogged: "false"}});
+  safeFill(startX + 2, startY + 1, startZ + 8, startX + 2, startY + 1, startZ + 11, "spruce_slab[type=top,waterlogged=false]", {blockStates: {type: "top", waterlogged: "false"}});
+  safeFill(startX + 2, startY + 1, startZ + 15, startX + 2, startY + 1, startZ + 18, "spruce_slab[type=top,waterlogged=false]", {blockStates: {type: "top", waterlogged: "false"}});
+  safeFill(startX + 3, startY + 1, startZ + 1, startX + 3, startY + 1, startZ + 4, "spruce_trapdoor[facing=south,half=bottom,open=false,powered=false,waterlogged=false]", {blockStates: {facing: "south", half: "bottom", open: "false", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 0, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 0, "spruce_stairs", {blockStates: {facing: "south", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 0, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 1, "spruce_fence_gate", {blockStates: {facing: "north", in_wall: "false", open: "true", powered: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 4, "spruce_fence_gate", {blockStates: {facing: "north", in_wall: "false", open: "true", powered: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 5, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 5, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 7, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 7, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 8, "spruce_fence_gate", {blockStates: {facing: "north", in_wall: "false", open: "true", powered: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 11, "spruce_fence_gate", {blockStates: {facing: "north", in_wall: "false", open: "true", powered: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 12, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 12, "spruce_stairs", {blockStates: {facing: "north", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 12, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 14, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 14, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 15, "spruce_fence_gate", {blockStates: {facing: "north", in_wall: "false", open: "true", powered: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 18, "spruce_fence_gate", {blockStates: {facing: "north", in_wall: "false", open: "true", powered: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 19, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 19, "spruce_stairs", {blockStates: {facing: "north", half: "bottom", shape: "straight", waterlogged: "false"}});
+  safeSetBlock(startX + 4, startY + 0, startZ + 19, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 0, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 5, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 7, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 12, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 14, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 1, startZ + 19, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 2, startZ + 12, "light", {blockStates: {level: "15", waterlogged: "false"}});
+}

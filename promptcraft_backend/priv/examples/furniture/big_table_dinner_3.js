@@ -1,0 +1,52 @@
+// big_table_dinner_3
+// Size: 12x13x5
+function buildCreation(startX, startY, startZ) {
+  safeFill(startX + 6, startY + 1, startZ + 4, startX + 6, startY + 1, startZ + 7, "bamboo[age=1,leaves=small,stage=0]", {blockStates: {age: "1", leaves: "small", stage: "0"}});
+  safeFill(startX + 6, startY + 0, startZ + 4, startX + 6, startY + 0, startZ + 7, "bamboo[age=1,leaves=none,stage=0]", {blockStates: {age: "1", leaves: "none", stage: "0"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 0, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 1, "spruce_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 1, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 1, "spruce_trapdoor", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 3, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 3, "stripped_spruce_wood", {blockStates: {axis: "x"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 3, "stripped_spruce_wood", {blockStates: {axis: "x"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 3, "stripped_spruce_wood", {blockStates: {axis: "x"}});
+  safeSetBlock(startX + 9, startY + 0, startZ + 3, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 4, "spruce_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 4, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 4, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 4, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 9, startY + 0, startZ + 4, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 10, startY + 0, startZ + 4, "spruce_trapdoor", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 5, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 5, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 5, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 9, startY + 0, startZ + 5, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 6, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 6, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 6, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 9, startY + 0, startZ + 6, "spruce_trapdoor", {blockStates: {facing: "north", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 2, startY + 0, startZ + 7, "spruce_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 7, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 7, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 7, "stripped_spruce_wood", {blockStates: {axis: "z"}});
+  safeSetBlock(startX + 9, startY + 0, startZ + 7, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 10, startY + 0, startZ + 7, "spruce_trapdoor", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 3, startY + 0, startZ + 8, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 8, "stripped_spruce_wood", {blockStates: {axis: "x"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 8, "stripped_spruce_wood", {blockStates: {axis: "x"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 8, "stripped_spruce_wood", {blockStates: {axis: "x"}});
+  safeSetBlock(startX + 9, startY + 0, startZ + 8, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 0, startZ + 10, "spruce_trapdoor", {blockStates: {facing: "west", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 10, "dark_oak_slab", {blockStates: {type: "bottom", waterlogged: "false"}});
+  safeSetBlock(startX + 7, startY + 0, startZ + 10, "spruce_trapdoor", {blockStates: {facing: "east", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 6, startY + 0, startZ + 11, "spruce_trapdoor", {blockStates: {facing: "south", half: "bottom", open: "true", powered: "false", waterlogged: "false"}});
+  safeSetBlock(startX + 5, startY + 1, startZ + 3, "flower_pot");
+  safeSetBlock(startX + 7, startY + 1, startZ + 5, "flower_pot");
+  safeSetBlock(startX + 5, startY + 1, startZ + 6, "flower_pot");
+  safeSetBlock(startX + 7, startY + 1, startZ + 8, "flower_pot");
+  safeSetBlock(startX + 6, startY + 2, startZ + 4, "tripwire", {blockStates: {attached: "false", disarmed: "false", east: "false", north: "false", powered: "false", south: "true", west: "false"}});
+  safeSetBlock(startX + 6, startY + 2, startZ + 5, "tripwire", {blockStates: {attached: "false", disarmed: "false", east: "false", north: "true", powered: "false", south: "true", west: "false"}});
+  safeSetBlock(startX + 6, startY + 2, startZ + 6, "tripwire", {blockStates: {attached: "false", disarmed: "false", east: "false", north: "true", powered: "false", south: "true", west: "false"}});
+  safeSetBlock(startX + 6, startY + 2, startZ + 7, "tripwire", {blockStates: {attached: "false", disarmed: "false", east: "false", north: "true", powered: "false", south: "false", west: "false"}});
+}
