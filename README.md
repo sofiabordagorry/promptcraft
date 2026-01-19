@@ -7,11 +7,13 @@ Promptcraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoeni
 ## Features
 
 - `/askAI <description>` command in Minecraft
-- Backend powered by OpenAI GPT-4o-mini (configurable)
-- JSON-based structure format with palette and layers
+- Backend powered by OpenAI GPT-5.2 (configurable)
+- LLM generates JavaScript code that is executed server-side
+- Style-based generation with auto-detection (tree, house, village, furniture)
 - Custom builder block that constructs structures dynamically
 - Modular architecture with configurable block lists
 - HTTP client for async communication between mod and backend
+- Debug output exports (JavaScript code, blocks JSON, structure JSON, LLM response)
 
 ## Project Structure
 
@@ -35,13 +37,17 @@ Promptcraft/
 └── promptcraft_backend/            # Phoenix backend (Elixir)
     ├── lib/promptcraft_backend/
     │   ├── structure_generator.ex  # LLM integration
+    │   ├── js_executor.ex          # JavaScript code executor
+    │   ├── config.ex               # Style configuration
     │   └── application.ex
     ├── lib/promptcraft_backend_web/
     │   ├── controllers/
     │   │   └── structure_controller.ex
     │   └── router.ex
     ├── priv/
-    │   └── allowed_blocks.txt      # Configurable block list
+    │   ├── allowed_blocks.txt      # Configurable block list
+    │   └── examples/               # Style-specific examples
+    ├── exported/                   # Debug outputs (auto-generated)
     └── test/                       # Unit and integration tests
 ```
 
@@ -100,12 +106,14 @@ Edit `promptcraft_backend/lib/promptcraft_backend/structure_generator.ex`:
 
 ```elixir
 body = %{
-  "model" => "gpt-4o-mini",  # Change here
+  "model" => "gpt-5.2",  # Change here
+  "temperature" => 0.4,
+  "top_p" => 0.9,
   ...
 }
 ```
 
-Available models: `gpt-4o-mini`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`
+Available models: `gpt-5.2`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`
 
 ### Adding Allowed Blocks
 
@@ -143,31 +151,76 @@ Generate a Minecraft structure from a text prompt.
     "width": 16,
     "depth": 16,
     "height": 16
-  }
+  },
+  "style": "house"
 }
 ```
+
+**Parameters:**
+- `prompt` (required): Text description of the structure to generate
+- `max_size` (optional): Maximum dimensions for the structure. Defaults to 50x50x50
+  - `width`: Maximum width (X axis)
+  - `depth`: Maximum depth (Z axis)
+  - `height`: Maximum height (Y axis)
+- `style` (optional): Building style. Available styles:
+  - `"tree"`: Natural trees (oak, spruce, birch, etc.)
+  - `"house"`: Residential buildings, cottages, homes
+  - `"village"`: Village structures (wells, community buildings)
+  - `"furniture"`: Interior furniture and decorations
+  - If not provided, style is auto-detected from keywords in the prompt
+
+**How it works:**
+1. The LLM receives the prompt and generates JavaScript code using `safeFill()` and `safeSetBlock()` functions
+2. The JavaScript code is executed server-side in a sandboxed environment
+3. The execution produces a list of blocks with coordinates and properties
+4. Coordinates are normalized to start at (0,0,0)
+5. The final structure is returned as JSON
 
 **Response:**
 ```json
 {
-  "palette": {
-    "W": "minecraft:oak_planks",
-    "L": "minecraft:oak_log",
-    "#": "minecraft:air"
-  },
+  "blocks": [
+    {
+      "block": "minecraft:oak_planks",
+      "block_states": {},
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "block": "minecraft:oak_log",
+      "block_states": {
+        "axis": "y"
+      },
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    {
+      "block": "minecraft:air",
+      "block_states": {},
+      "x": 1,
+      "y": 0,
+      "z": 0
+    }
+  ],
   "size": {
     "width": 7,
     "depth": 7,
     "height": 5
-  },
-  "layers": [
-    {
-      "y": 0,
-      "rows": ["WWWWWWW", "W#####W", "W#####W", "W#####W", "WWWWWWW"]
-    }
-  ]
+  }
 }
 ```
+
+**Response Fields:**
+- `blocks`: Array of block placements (coordinates normalized to start at 0,0,0)
+  - `block`: Full block ID (e.g., "minecraft:oak_planks")
+  - `block_states`: Block properties (e.g., facing direction, axis, half)
+  - `x`, `y`, `z`: Block position coordinates (Y=0 is the bottom of the structure)
+- `size`: Calculated bounding box dimensions
+  - `width`: Structure width (X dimension)
+  - `depth`: Structure depth (Z dimension)
+  - `height`: Structure height (Y dimension)
 
 ## Development
 
