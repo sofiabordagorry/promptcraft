@@ -4,8 +4,6 @@ AI-powered Minecraft structure generation from natural language descriptions.
 
 Promptcraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoenix backend powered by LLMs. Players describe structures using the `/askAI` command, receive a special builder block, and place it in the world to automatically generate the structure.
 
-## Features
-
 - `/askAI <description>` command in Minecraft
 - Backend powered by OpenAI GPT-5.2 (configurable)
 - LLM generates JavaScript code that is executed server-side
@@ -14,42 +12,6 @@ Promptcraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoeni
 - Modular architecture with configurable block lists
 - HTTP client for async communication between mod and backend
 - Debug output exports (JavaScript code, blocks JSON, structure JSON, LLM response)
-
-## Project Structure
-
-```
-Promptcraft/
-├── Promptcraft/                    # Fabric mod (Minecraft Java)
-│   ├── src/main/java/com/example/
-│   │   ├── ExampleMod.java         # Main mod + /askAI command
-│   │   ├── AIBuildingBlock.java   # Builder block logic
-│   │   ├── ModBlocks.java          # Block registration
-│   │   ├── http/
-│   │   │   └── BackendClient.java # HTTP client to backend
-│   │   └── structure/
-│   │       ├── StructureDefinition.java
-│   │       ├── StructureRegistry.java
-│   │       ├── StructureSize.java
-│   │       └── StructureLayer.java
-│   └── src/main/resources/
-│       ├── fabric.mod.json         # Mod metadata
-│       └── assets/modid/           # Textures and models
-└── promptcraft_backend/            # Phoenix backend (Elixir)
-    ├── lib/promptcraft_backend/
-    │   ├── structure_generator.ex  # LLM integration
-    │   ├── js_executor.ex          # JavaScript code executor
-    │   ├── config.ex               # Style configuration
-    │   └── application.ex
-    ├── lib/promptcraft_backend_web/
-    │   ├── controllers/
-    │   │   └── structure_controller.ex
-    │   └── router.ex
-    ├── priv/
-    │   ├── allowed_blocks.txt      # Configurable block list
-    │   └── examples/               # Style-specific examples
-    ├── exported/                   # Debug outputs (auto-generated)
-    └── test/                       # Unit and integration tests
-```
 
 ## Quick Start
 
