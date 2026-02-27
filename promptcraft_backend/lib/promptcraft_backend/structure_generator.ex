@@ -1,7 +1,8 @@
 defmodule PromptcraftBackend.StructureGenerator do
   @moduledoc false
 
-  alias PromptcraftBackend.Config
+  alias PromptcraftBackend.Style
+  alias PromptcraftBackend.PromptBuilder
 
   @allowed_blocks_file "priv/allowed_blocks.txt"
 
@@ -27,230 +28,129 @@ defmodule PromptcraftBackend.StructureGenerator do
     end
   end
 
-  defp load_examples do
-    Config.example_paths()
-    |> Enum.flat_map(fn folder_path ->
-      case File.ls(folder_path) do
-        {:ok, files} ->
-          files
-          |> Enum.filter(&String.ends_with?(&1, ".json"))
-          |> Enum.map(fn file ->
-            path = Path.join(folder_path, file)
-            case File.read(path) do
-              {:ok, content} ->
-                case Jason.decode(content) do
-                  {:ok, json} -> json
-                  {:error, _} -> nil
-                end
-              {:error, _} -> nil
-            end
-          end)
-          |> Enum.reject(&is_nil/1)
-
-        {:error, _} ->
-          []
-      end
-    end)
-  end
-
-  defp pick_examples(n, style) do
-    examples = case style do
-      nil -> load_examples()
-      style_name -> load_examples_for_style(style_name)
-    end
-
-    examples
-    |> Enum.shuffle()
-    |> Enum.take(n)
-  end
-
-  defp load_examples_for_style(style) do
-    style_path = Path.join([Config.examples_base_dir(), style])
-
-    case File.ls(style_path) do
-      {:ok, files} ->
-        files
-        |> Enum.filter(&String.ends_with?(&1, ".json"))
-        |> Enum.reject(&(&1 == "_prompt.txt"))
-        |> Enum.map(fn file ->
-          path = Path.join(style_path, file)
-          case File.read(path) do
-            {:ok, content} ->
-              case Jason.decode(content) do
-                {:ok, json} -> json
-                {:error, _} -> nil
-              end
-            {:error, _} -> nil
-          end
-        end)
-        |> Enum.reject(&is_nil/1)
-
-      {:error, _} ->
-        []
-    end
-  end
-
-  defp build_example_messages(examples) do
-    examples
-    |> Enum.with_index(1)
-    |> Enum.flat_map(fn {%{"description" => desc, "structure" => structure}, idx} ->
-      [
-        %{
-          "role" => "user",
-          "content" => "EXAMPLE #{idx}: Generate a structure for: \"#{desc}\""
-        },
-        %{
-          "role" => "assistant",
-          "content" => Jason.encode!(structure)
-        }
-      ]
-    end)
-  end
-
   def generate(prompt, max_size, style \\ nil) do
     allowed_blocks = load_allowed_blocks()
 
-    detected_style = style || detect_style_from_prompt(prompt)
-
-    examples = pick_examples(3, detected_style)
+    detected_style = style || Style.detect_style_from_prompt(prompt)
 
     # Get style-specific instructions if available
-    style_specific_prompt = case Config.get_style_config(detected_style) do
-      {:ok, %{custom_prompt: custom}} ->
-        """
+    style_specific_prompt = Style.get_style_prompt(detected_style)
 
-        ═══════════════════════════════════════════════════════════════════════════════
-        STYLE-SPECIFIC INSTRUCTIONS
-        ═══════════════════════════════════════════════════════════════════════════════
+    style_context = Style.get_style_context(detected_style)
 
-        #{custom}
-        """
-      {:error, _} -> ""
-    end
+    prompts =
+      PromptBuilder.build(%{
+        prompt: prompt,
+        max_size: max_size,
+        allowed_blocks: allowed_blocks,
+        style_specific_prompt: style_specific_prompt,
+        style_context: style_context
+      })
 
-    style_context = if detected_style, do: " in #{detected_style} style", else: ""
+    system_prompt = prompts.system
+    user_prompt = prompts.user
 
-    system_prompt = """
-    You are an expert Minecraft builder specializing in creating authentic, beautiful structures.
-
-    YOUR TASK: Generate a complete 3D voxel structure as a JSON object.#{style_specific_prompt}
-
-    ═══════════════════════════════════════════════════════════════════════════════
-    MINECRAFT BUILDING FUNDAMENTALS
-    ═══════════════════════════════════════════════════════════════════════════════
-
-    PHYSICS & CONSTRUCTION RULES:
-    • Gravity: Sand, gravel, concrete_powder fall if unsupported. Avoid using them mid-air.
-    • Support: Most blocks need support below them. Avoid large floating structures.
-    • Water: Flows and spreads. Use carefully or not at all in structures.
-    • Ground Level: Y=0 is the BOTTOM of your structure (foundation level).
-
-    MULTIBLOCK STRUCTURES (CRITICAL):
-    • **Doors**: Automatically create 2-block tall structure (Y and Y+1)
-      - Only place door at Y=1, do NOT place anything at Y=2 in same X,Z position
-    • **Beds**: Automatically create 2-block wide structure (X and X+1)
-      - Only place bed once, do NOT place block at adjacent X position
-
-    ═══════════════════════════════════════════════════════════════════════════════
-    JSON OUTPUT FORMAT
-    ═══════════════════════════════════════════════════════════════════════════════
-
-    You MUST output a valid JSON object with this EXACT structure:
-
-    {
-      "palette": {
-        "<char>": "minecraft:<block_id>",
-        "<char>": "minecraft:<block_id>",
-        "#": "minecraft:air"
-      },
-      "size": {"width": <int>, "depth": <int>, "height": <int>},
-      "layers": [
-        {"y": <int>, "rows": ["<string>", "<string>", ...]},
-        {"y": <int>, "rows": ["<string>", "<string>", ...]},
-        ...
-      ]
-    }
-
-    EXAMPLE (7x7x5 medieval house - for FORMAT reference only, create your own structure):
-    {
-      "palette": {
-        "S": "minecraft:stone_bricks",
-        "W": "minecraft:oak_planks",
-        "L": "minecraft:oak_log",
-        "D": "minecraft:oak_door",
-        "G": "minecraft:glass_pane",
-        "R": "minecraft:oak_stairs",
-        "#": "minecraft:air"
-      },
-      "size": {"width": 7, "depth": 7, "height": 5},
-      "layers": [
-        {"y": 0, "rows": ["SSSSSSS", "SWWWWWS", "SWWDWWS", "SWWWWWS", "SWWWWWS", "SWWWWWS", "SSSSSSS"]},
-        {"y": 1, "rows": ["LWWWWWL", "WG###GW", "W##D##W", "W#####W", "W#####W", "WG###GW", "LWWWWWL"]},
-        {"y": 2, "rows": ["LWWWWWL", "WG###GW", "W#####W", "W#####W", "W#####W", "WG###GW", "LWWWWWL"]},
-        {"y": 3, "rows": ["RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR", "RRRRRRR"]},
-        {"y": 4, "rows": ["#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#", "#RRRRR#"]}
-      ]
-    }
-
-    JSON CONSTRAINTS:
-    • **size**: width, depth, height MUST be ≤ #{max_size["width"]}, #{max_size["depth"]}, #{max_size["height"]}
-    • **palette**: Every character used in rows MUST have an entry in palette
-      - '#' MUST always map to "minecraft:air"
-      - Only use these blocks: #{Enum.join(allowed_blocks, ", ")}
-      - BLOCK STATES: You can specify block properties using [property=value] syntax
-        Examples:
-        * "R": "minecraft:oak_stairs[facing=north,half=bottom]"
-        * "T": "minecraft:oak_stairs[facing=south,half=top]"
-        * "S": "minecraft:oak_slab[type=bottom]"
-        * "L": "minecraft:oak_leaves[distance=1,persistent=false,waterlogged=false]"
-        * "A": "minecraft:oak_log[axis=y]"
-        Common properties:
-        - Stairs/slabs: facing (north/south/east/west), half (top/bottom), type (top/bottom/double)
-        - Leaves: distance (1-7), persistent (true/false), waterlogged (false)
-        - Logs: axis (x/y/z)
-    • **layers**:
-      - Start at y=0 (ground) and increment by 1 each layer
-      - Each layer MUST have exactly 'depth' rows
-      - Each row MUST have exactly 'width' characters
-
-    ═══════════════════════════════════════════════════════════════════════════════
-    LEARNING FROM EXAMPLES
-    ═══════════════════════════════════════════════════════════════════════════════
-
-    You will see EXAMPLE pairs of (description + JSON structure) below.
-    Study their patterns: foundation layout, wall structure, roof shape, symmetry, block choices.
-    Use these as inspiration but DO NOT copy them exactly.
-    Create a NEW structure adapted to the user's specific request.
-
-    ═══════════════════════════════════════════════════════════════════════════════
-
-    Respond with ONLY the JSON object. No markdown, no explanations, no code blocks.
-    """
-
-    user_prompt = """
-    USER REQUEST: "#{prompt}"
-
-    INSTRUCTIONS:
-    1. Think about what type of structure fits this request#{style_context}
-    2. Plan the dimensions (width, depth, height) - keep it compact
-    3. Design layer by layer from Y=0 (foundation) upward
-    4. Follow the style-specific instructions above if provided
-    5. Use appropriate materials for the style
-
-    Output ONLY the JSON object.
-    """
-
-    messages =
-      [%{"role" => "system", "content" => system_prompt}] ++
-        build_example_messages(examples) ++
-        [%{"role" => "user", "content" => user_prompt}]
+    messages = [
+      %{"role" => "system", "content" => system_prompt},
+      %{"role" => "user", "content" => user_prompt}
+    ]
 
     with {:ok, raw} <- call_llm(messages),
-         {:ok, parsed} <- Jason.decode(raw) do
-      {:ok, parsed}
+         {:ok, %{"code" => py_code}} <- parse_py_response(raw),
+         {:ok, blocks} <- PromptcraftBackend.PyExecutor.execute(py_code) do
+      # Calculate structure size
+      structure = blocks_to_simple_structure(blocks)
+
+      # Debug: Save generated structure and Python code
+      save_debug_output(prompt, py_code, blocks, structure, raw)
+      {:ok, structure}
     else
       {:error, reason} -> {:error, reason}
       _ -> {:error, :bad_response}
+    end
+  end
+
+  defp save_debug_output(prompt, py_code, blocks, structure, raw_response) do
+    timestamp = DateTime.utc_now() |> DateTime.to_unix()
+    safe_prompt = prompt |> String.replace(~r/[^a-zA-Z0-9_]/, "_") |> String.slice(0, 30)
+
+    debug_dir = "exported"
+    File.mkdir_p!(debug_dir)
+
+    base_name = "#{debug_dir}/#{safe_prompt}_#{timestamp}"
+
+    # Save Python code
+    File.write!("#{base_name}.py", """
+    # Prompt: #{prompt}
+    # Generated at: #{DateTime.utc_now()}
+
+    #{py_code}
+    """)
+
+    # Save blocks list
+    File.write!("#{base_name}_blocks.json", Jason.encode!(blocks, pretty: true))
+
+    # Save final structure
+    File.write!("#{base_name}_structure.json", Jason.encode!(structure, pretty: true))
+
+    # Save full LLM response
+    File.write!("#{base_name}_llm_response.txt", raw_response)
+
+    IO.puts("\nDEBUG: Saved debug files to:")
+    IO.puts("   - #{base_name}.py")
+    IO.puts("   - #{base_name}_blocks.json")
+    IO.puts("   - #{base_name}_structure.json")
+    IO.puts("   - #{base_name}_llm_response.txt\n")
+  rescue
+    e -> IO.puts("Warning: Failed to save debug output: #{Exception.message(e)}")
+  end
+
+  defp parse_py_response(text) do
+    case Regex.run(~r/<code>\s*(.*?)\s*<\/code>/s, text) do
+      [_, py_code] -> {:ok, %{"code" => py_code}}
+      nil -> {:error, :no_code_found}
+    end
+  end
+
+  defp blocks_to_simple_structure(blocks) do
+    if Enum.empty?(blocks) do
+      %{
+        "blocks" => [],
+        "size" => %{"width" => 0, "depth" => 0, "height" => 0}
+      }
+    else
+      xs = Enum.map(blocks, & &1.x)
+      ys = Enum.map(blocks, & &1.y)
+      zs = Enum.map(blocks, & &1.z)
+
+      min_x = Enum.min(xs)
+      max_x = Enum.max(xs)
+      min_y = Enum.min(ys)
+      max_y = Enum.max(ys)
+      min_z = Enum.min(zs)
+      max_z = Enum.max(zs)
+
+      width = max_x - min_x + 1
+      depth = max_z - min_z + 1
+      height = max_y - min_y + 1
+
+      # Normalize blocks to start at (0,0,0)
+      normalized_blocks =
+        blocks
+        |> Enum.map(fn b ->
+          %{
+            "x" => b.x - min_x,
+            "y" => b.y - min_y,
+            "z" => b.z - min_z,
+            "block" => b.block,
+            "block_states" => b.block_states || %{}
+          }
+        end)
+
+      %{
+        "blocks" => normalized_blocks,
+        "size" => %{"width" => width, "depth" => depth, "height" => height}
+      }
     end
   end
 
@@ -258,10 +158,10 @@ defmodule PromptcraftBackend.StructureGenerator do
     api_key = System.fetch_env!("OPENAI_API_KEY")
 
     body = %{
-      "model" => "gpt-5.1",
+      "model" => "gpt-5.2",
       "messages" => messages,
-      "temperature" => 0.3,
-      "response_format" => %{"type" => "json_object"}
+      "temperature" => 0.8,
+      "top_p" => 0.9
     }
 
     case Req.post("https://api.openai.com/v1/chat/completions",
@@ -269,7 +169,9 @@ defmodule PromptcraftBackend.StructureGenerator do
            headers: [
              {"authorization", "Bearer #{api_key}"},
              {"content-type", "application/json"}
-           ]
+           ],
+           receive_timeout: 120_000,
+           connect_options: [timeout: 30_000]
          ) do
       {:ok, %Req.Response{status: 200, body: %{"choices" => [choice | _]}}} ->
         content = get_in(choice, ["message", "content"])
@@ -278,28 +180,5 @@ defmodule PromptcraftBackend.StructureGenerator do
       other ->
         {:error, other}
     end
-  end
-
-
-
-  defp detect_style_from_prompt(prompt) do
-    prompt_lower = String.downcase(prompt)
-
-    available_styles = Config.style_folders()
-
-    style_keywords = %{
-      "tree" => ["tree", "oak", "birch", "spruce", "jungle", "acacia", "dark oak", "cherry"],
-      "medieval" => ["medieval", "castle", "tower", "fortress", "keep", "house", "cottage"],
-      "couch" => ["couch", "sofa", "chair", "seating", "furniture"],
-      "table" => ["table", "desk", "dining"]
-    }
-
-    detected = Enum.find(available_styles, fn style ->
-      keywords = Map.get(style_keywords, style, [style])
-      Enum.any?(keywords, fn keyword ->
-        String.contains?(prompt_lower, keyword)
-      end)
-    end)
-    detected
   end
 end

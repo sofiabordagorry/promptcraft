@@ -47,6 +47,7 @@ promptcraft_backend/*.beam
 promptcraft_backend/config/*.secret.exs
 promptcraft_backend/.elixir_ls/
 promptcraft_backend/priv/static/
+promptcraft_backend/exported/
 
 # Environment variables
 promptcraft_backend/.env

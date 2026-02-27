@@ -1,9 +1,5 @@
 package com.example;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,12 +40,8 @@ public class StructureExporter {
     public static String exportStructure(ServerPlayer player, ServerLevel level, String description) {
         BlockPos pos1 = getPos1(player);
         BlockPos pos2 = getPos2(player);
+        if (pos1 == null || pos2 == null) return null;
 
-        if (pos1 == null || pos2 == null) {
-            return null;
-        }
-
-        // Calculate bounds (min/max corners)
         int minX = Math.min(pos1.getX(), pos2.getX());
         int maxX = Math.max(pos1.getX(), pos2.getX());
         int minY = Math.min(pos1.getY(), pos2.getY());
@@ -61,148 +53,110 @@ public class StructureExporter {
         int height = maxY - minY + 1;
         int depth = maxZ - minZ + 1;
 
-        // Scan blocks and build palette
-        Map<String, Character> blockToSymbol = new HashMap<>();
-        Map<Character, String> palette = new LinkedHashMap<>();
-        char currentSymbol = 'A';
-
-        // Reserve # for air
-        palette.put('#', "minecraft:air");
-        blockToSymbol.put("minecraft:air", '#');
-
-        // Store layers
-        List<LayerData> layers = new ArrayList<>();
-
+        List<ExportBlockData> blocks = new ArrayList<>();
+        
         for (int y = 0; y < height; y++) {
-            List<String> rows = new ArrayList<>();
-            
             for (int z = 0; z < depth; z++) {
-                StringBuilder row = new StringBuilder();
-                
                 for (int x = 0; x < width; x++) {
                     BlockPos pos = new BlockPos(minX + x, minY + y, minZ + z);
                     BlockState state = level.getBlockState(pos);
                     String blockId = getBlockStateString(state);
-
-                    // Get or create symbol for this block
-                    Character symbol = blockToSymbol.get(blockId);
-                    if (symbol == null) {
-                        symbol = currentSymbol++;
-                        blockToSymbol.put(blockId, symbol);
-                        palette.put(symbol, blockId);
-                        
-                        // Skip letters that might be confusing
-                        if (currentSymbol == '[' || currentSymbol == '\\' || currentSymbol == ']' || currentSymbol == '^') {
-                            currentSymbol = 'a';
-                        }
+                    if (!blockId.equals("minecraft:air")) {
+                        blocks.add(new ExportBlockData(x, y, z, blockId));
                     }
-                    
-                    row.append(symbol);
                 }
-                
-                rows.add(row.toString());
             }
-            
-            layers.add(new LayerData(y, rows));
         }
 
-        // Build JSON
-        JsonObject root = new JsonObject();
-        root.addProperty("description", description != null ? description : "Exported structure");
-
-        JsonObject structure = new JsonObject();
-        
-        // Add palette
-        JsonObject paletteJson = new JsonObject();
-        for (Map.Entry<Character, String> entry : palette.entrySet()) {
-            paletteJson.addProperty(String.valueOf(entry.getKey()), entry.getValue());
-        }
-        structure.add("palette", paletteJson);
-
-        // Add size
-        JsonObject size = new JsonObject();
-        size.addProperty("width", width);
-        size.addProperty("depth", depth);
-        size.addProperty("height", height);
-        structure.add("size", size);
-
-        // Add layers
-        JsonArray layersJson = new JsonArray();
-        for (LayerData layer : layers) {
-            JsonObject layerJson = new JsonObject();
-            layerJson.addProperty("y", layer.y);
-            
-            JsonArray rowsJson = new JsonArray();
-            for (String row : layer.rows) {
-                rowsJson.add(row);
-            }
-            layerJson.add("rows", rowsJson);
-            
-            layersJson.add(layerJson);
-        }
-        structure.add("layers", layersJson);
-
-        root.add("structure", structure);
-
-        // Convert to pretty JSON string
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(root);
+        return generatePythonCode(blocks, width, depth, height, description);
     }
 
-    public static boolean saveStructureToFile(String json, String filename) {
+    private static String generatePythonCode(List<ExportBlockData> blocks, int width, int depth, int height, String description) {
+        StringBuilder py = new StringBuilder();
+        py.append("# ").append(description != null ? description : "Exported structure").append("\n");
+        py.append("# Size: ").append(width).append("x").append(depth).append("x").append(height).append("\n");
+        py.append("def build_creation(start_x, start_y, start_z):\n");
+        
+        for (ExportBlockData block : blocks) {
+            String blockName = block.blockId.replace("minecraft:", "");
+            String baseBlock = blockName.split("\\[")[0];
+            
+            if (block.blockId.contains("[")) {
+                String statesStr = block.blockId.substring(block.blockId.indexOf('[') + 1, block.blockId.indexOf(']'));
+                py.append("    placeBlock(start_x + ").append(block.x).append(", start_y + ").append(block.y)
+                  .append(", start_z + ").append(block.z).append(", \"").append(baseBlock)
+                  .append("\", block_states={");
+                
+                String[] pairs = statesStr.split(",");
+                for (int i = 0; i < pairs.length; i++) {
+                    String[] kv = pairs[i].split("=");
+                    py.append("\"").append(kv[0]).append("\": \"").append(kv[1]).append("\"");
+                    if (i < pairs.length - 1) py.append(", ");
+                }
+                py.append("})\n");
+            } else {
+                py.append("    placeBlock(start_x + ").append(block.x).append(", start_y + ").append(block.y)
+                  .append(", start_z + ").append(block.z).append(", \"").append(blockName).append("\")\n");
+            }
+        }
+        
+        return py.toString();
+    }
+
+    public static boolean saveStructureToFile(String pyCode, String filename) {
         try {
             Path exportDir = Paths.get("../../promptcraft_backend/priv/examples/exported");
             Files.createDirectories(exportDir);
-            
-            // Clean filename (remove special characters)
             String cleanFilename = filename.replaceAll("[^a-zA-Z0-9_-]", "_").toLowerCase();
-            if (!cleanFilename.endsWith(".json")) {
-                cleanFilename += ".json";
-            }
-            
-            Path filePath = exportDir.resolve(cleanFilename);
-            
-            // Write JSON to file
-            Files.writeString(filePath, json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            
-            ExampleMod.LOGGER.info("Structure saved to: {}", filePath.toAbsolutePath());
+            if (!cleanFilename.endsWith(".py")) cleanFilename += ".py";
+            Files.writeString(exportDir.resolve(cleanFilename), pyCode, 
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            PromptCraftMod.LOGGER.info("Structure saved: {}", cleanFilename);
             return true;
         } catch (IOException e) {
-            ExampleMod.LOGGER.error("Failed to save structure to file", e);
+            PromptCraftMod.LOGGER.error("Failed to save structure", e);
             return false;
         }
     }
 
     private static String getBlockStateString(BlockState state) {
         String blockId = state.getBlock().builtInRegistryHolder().key().location().toString();
-        
-        // Check if block has properties
         Collection<Property<?>> properties = state.getProperties();
-        if (properties.isEmpty() || blockId.equals("minecraft:air")) {
-            return blockId;
-        }
+        
+        if (properties.isEmpty() || blockId.equals("minecraft:air")) return blockId;
 
-        // Build property string
         StringBuilder props = new StringBuilder();
         boolean first = true;
         for (Property<?> property : properties) {
-            if (!first) {
-                props.append(",");
-            }
-            props.append(property.getName()).append("=").append(state.getValue(property).toString());
+            if (!first) props.append(",");
+            props.append(property.getName()).append("=").append(state.getValue(property));
             first = false;
         }
-
-        return blockId + "[" + props.toString() + "]";
+        return blockId + "[" + props + "]";
     }
 
-    private static class LayerData {
-        final int y;
-        final List<String> rows;
+    private static class ExportBlockData {
+        final int x, y, z;
+        final String blockId;
 
-        LayerData(int y, List<String> rows) {
+        ExportBlockData(int x, int y, int z, String blockId) {
+            this.x = x;
             this.y = y;
-            this.rows = rows;
+            this.z = z;
+            this.blockId = blockId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ExportBlockData that = (ExportBlockData) o;
+            return x == that.x && y == that.y && z == that.z;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y, z);
         }
     }
 }

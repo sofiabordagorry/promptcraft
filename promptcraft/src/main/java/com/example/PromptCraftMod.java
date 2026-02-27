@@ -17,21 +17,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class ExampleMod implements ModInitializer {
+public class PromptCraftMod implements ModInitializer {
     public static final String MOD_ID = "promptcraft";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     @Override
     public void onInitialize() {
-
         LOGGER.info("Initializing Promptcraft...");
-
-        // Custom block
         ModBlocks.register();
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-
-            // AI Structure command
             dispatcher.register(
                     Commands.literal("askAI")
                             .then(Commands.argument("prompt", MessageArgument.message())
@@ -42,59 +37,20 @@ public class ExampleMod implements ModInitializer {
                                         player.sendSystemMessage(Component.literal("Generating structure: " + prompt));
                                         player.sendSystemMessage(Component.literal("Please wait..."));
 
-                                        BackendClient.requestStructure(
-                                                prompt,
-                                                structure -> {
-                                                    UUID structureId = StructureRegistry.register(structure);
-
-                                                    ItemStack builderBlock = new ItemStack(ModBlocks.AI_BUILDER_BLOCK);
-                                                    
-                                                    var tag = builderBlock.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-                                                    tag.putString("structure_id", structureId.toString());
-                                                    builderBlock.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-
-                                                    player.getInventory().add(builderBlock);
-                                                    player.sendSystemMessage(Component.literal("Structure generated! Check your inventory."));
-                                                },
-                                                error -> {
-                                                    player.sendSystemMessage(Component.literal("Error: " + error));
-                                                    LOGGER.error("Structure generation failed: {}", error);
-                                                }
-                                        );
-
-                                        return 1;
-                                    })
-                            )
-            );
-
-            // Example Structure command
-            dispatcher.register(
-                    Commands.literal("buildExample")
-                            .then(Commands.argument("name", MessageArgument.message())
-                                    .executes(context -> {
-                                        ServerPlayer player = context.getSource().getPlayerOrException();
-                                        String name = MessageArgument.getMessage(context, "name").getString();
-
-                                        player.sendSystemMessage(Component.literal("Loading example: " + name));
-
-                                        BackendClient.requestExample(
-                                                name,
-                                                structure -> {
-                                                    UUID structureId = StructureRegistry.register(structure);
-
-                                                    ItemStack builderBlock = new ItemStack(ModBlocks.AI_BUILDER_BLOCK);
-                                                    
-                                                    var tag = builderBlock.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-                                                    tag.putString("structure_id", structureId.toString());
-                                                    builderBlock.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-
-                                                    player.getInventory().add(builderBlock);
-                                                    player.sendSystemMessage(Component.literal("Example loaded! Place the block to build."));
-                                                },
-                                                error -> {
-                                                    player.sendSystemMessage(Component.literal("Error: " + error));
-                                                    LOGGER.error("Example load failed: {}", error);
-                                                }
+                                        BackendClient.requestStructure(prompt,
+                                            structure -> {
+                                                UUID structureId = StructureRegistry.register(structure);
+                                                ItemStack builderBlock = new ItemStack(ModBlocks.AI_BUILDER_BLOCK);
+                                                var tag = builderBlock.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+                                                tag.putString("structure_id", structureId.toString());
+                                                builderBlock.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                                                player.getInventory().add(builderBlock);
+                                                player.sendSystemMessage(Component.literal("Structure generated! Check your inventory."));
+                                            },
+                                            error -> {
+                                                player.sendSystemMessage(Component.literal("Error: " + error));
+                                                LOGGER.error("Structure generation failed: {}", error);
+                                            }
                                         );
 
                                         return 1;
@@ -122,14 +78,13 @@ public class ExampleMod implements ModInitializer {
                                 var pos = player.blockPosition();
                                 StructureExporter.setPos2(player, pos);
                                 player.sendSystemMessage(Component.literal("Position 2 set to: " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ()));
-                                
                                 if (StructureExporter.hasSelection(player)) {
                                     var pos1 = StructureExporter.getPos1(player);
                                     var pos2 = StructureExporter.getPos2(player);
-                                    int width = Math.abs(pos2.getX() - pos1.getX()) + 1;
-                                    int height = Math.abs(pos2.getY() - pos1.getY()) + 1;
-                                    int depth = Math.abs(pos2.getZ() - pos1.getZ()) + 1;
-                                    player.sendSystemMessage(Component.literal("Selection: " + width + "x" + depth + "x" + height + " (" + (width * height * depth) + " blocks)"));
+                                    int w = Math.abs(pos2.getX() - pos1.getX()) + 1;
+                                    int h = Math.abs(pos2.getY() - pos1.getY()) + 1;
+                                    int d = Math.abs(pos2.getZ() - pos1.getZ()) + 1;
+                                    player.sendSystemMessage(Component.literal("Selection: " + w + "x" + d + "x" + h + " (" + (w * h * d) + " blocks)"));
                                 }
                                 return 1;
                             })
@@ -149,19 +104,14 @@ public class ExampleMod implements ModInitializer {
                                         }
 
                                         player.sendSystemMessage(Component.literal("Exporting structure..."));
-
                                         String json = StructureExporter.exportStructure(player, player.serverLevel(), description);
-                                        
                                         if (json != null) {
-                                            // Generate filename from description
                                             String filename = description.replaceAll("[^a-zA-Z0-9_-]", "_").toLowerCase();
-                                            
                                             boolean saved = StructureExporter.saveStructureToFile(json, filename);
-                                            
                                             if (saved) {
-                                                player.sendSystemMessage(Component.literal("Structure exported to: priv/examples/exported/" + filename + ".json"));
+                                                player.sendSystemMessage(Component.literal("Exported to: priv/examples/exported/" + filename + ".py"));
                                             } else {
-                                                player.sendSystemMessage(Component.literal("Failed to save file (check server logs)"));
+                                                player.sendSystemMessage(Component.literal("Failed to save file"));
                                             }
                                         } else {
                                             player.sendSystemMessage(Component.literal("Export failed!"));

@@ -1,28 +1,21 @@
 package com.example.structure;
 
 import java.util.List;
-import java.util.Map;
 
 public class StructureDefinition {
-    private final Map<String, String> palette;
+    private final List<BlockData> blocks;
     private final StructureSize size;
-    private final List<StructureLayer> layers;
 
-    public StructureDefinition(Map<String, String> palette, StructureSize size, List<StructureLayer> layers) {
-        this.palette = palette;
+    public StructureDefinition(List<BlockData> blocks, StructureSize size) {
+        this.blocks = blocks;
         this.size = size;
-        this.layers = layers;
     }
 
-    public Map<String, String> getPalette() {
-        return palette;
+    public List<BlockData> getBlocks() {
+        return blocks;
     }
 
     public StructureSize getSize() {
         return size;
-    }
-
-    public List<StructureLayer> getLayers() {
-        return layers;
     }
 }

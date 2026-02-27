@@ -1,8 +1,8 @@
 package com.example;
 
 import com.example.structure.StructureDefinition;
-import com.example.structure.StructureLayer;
 import com.example.structure.StructureRegistry;
+import com.example.structure.StructureSize;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -50,13 +50,13 @@ public class AIBuildingBlock extends Block {
             player.sendSystemMessage(Component.literal("🏗️ Building structure..."));
         }
 
-        // Read structure ID from NBT
         CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         String structureIdStr = customData.copyTag().getString("structure_id");
 
         if (structureIdStr == null || structureIdStr.isEmpty()) {
-            // Fallback: build default demo structure
-            buildDefaultStructure(serverLevel, pos, placer);
+            if (placer instanceof ServerPlayer player) {
+                player.sendSystemMessage(Component.literal("No structure data found!"));
+            }
             return;
         }
 
@@ -66,158 +66,112 @@ public class AIBuildingBlock extends Block {
 
             if (structure == null) {
                 if (placer instanceof ServerPlayer player) {
-                    player.sendSystemMessage(Component.literal("❌ Structure not found!"));
+                    player.sendSystemMessage(Component.literal("Structure not found!"));
                 }
                 return;
             }
 
-            // Build structure from definition
-            buildStructure(serverLevel, pos, structure, placer);
+            BlockPos adjustedPos = calculateSafeStartPosition(pos, placer.getDirection(), structure.getSize());
+            buildStructure(serverLevel, adjustedPos, structure, placer);
 
         } catch (IllegalArgumentException e) {
-            ExampleMod.LOGGER.error("Invalid structure UUID: {}", structureIdStr, e);
+            PromptCraftMod.LOGGER.error("Invalid structure UUID: {}", structureIdStr, e);
             if (placer instanceof ServerPlayer player) {
-                player.sendSystemMessage(Component.literal("❌ Invalid structure data!"));
+                player.sendSystemMessage(Component.literal("Invalid structure data!"));
             }
         }
     }
 
-        private void buildDefaultStructure(ServerLevel level, BlockPos startPos, LivingEntity placer) {
-            // Simple 3x3x3 cube of stone as a fallback
-            int size = 3;
-            int blocksPlaced = 0;
-    
-            for (int x = 0; x < size; x++) {
-                for (int y = 0; y < size; y++) {
-                    for (int z = 0; z < size; z++) {
-                        BlockPos targetPos = startPos.offset(x, y, z);
-                        level.setBlockAndUpdate(targetPos, Blocks.STONE.defaultBlockState());
-                        blocksPlaced++;
-                    }
-                }
-            }
-    
-            if (placer instanceof ServerPlayer player) {
-                player.sendSystemMessage(Component.literal("Built default structure (" + blocksPlaced + " blocks)"));
-            }
-        }
+    private BlockPos calculateSafeStartPosition(BlockPos blockPos, net.minecraft.core.Direction facing, StructureSize size) {
+        int offsetDistance = Math.max(size.getWidth(), size.getDepth()) - 5;
+        
+        return switch (facing) {
+            case NORTH -> blockPos.offset(0, 0, -offsetDistance);
+            case SOUTH -> blockPos.offset(0, 0, offsetDistance);
+            case EAST -> blockPos.offset(offsetDistance, 0, 0);
+            case WEST -> blockPos.offset(-offsetDistance, 0, 0);
+            default -> blockPos.offset(0, 0, 2);
+        };
+    }
 
     private void buildStructure(ServerLevel level, BlockPos startPos, StructureDefinition structure, LivingEntity placer) {
-        Map<String, String> palette = structure.getPalette();
-        List<StructureLayer> layers = structure.getLayers();
-
-        int blocksPlaced = 0;
+        List<com.example.structure.BlockData> blocks = structure.getBlocks();
         int depth = structure.getSize().getDepth();
-        
-        net.minecraft.core.Direction playerFacing = placer.getDirection();
-
         Map<String, String> skipPositions = new HashMap<>();
 
-        // FIRST PASS: Identify all multiblock positions that need to be skipped
-        for (StructureLayer layer : layers) {
-            int y = layer.getY();
-            List<String> rows = layer.getRows();
+        for (com.example.structure.BlockData blockData : blocks) {
+            String blockId = blockData.getBlock();
+            int x = blockData.getX(), y = blockData.getY(), z = blockData.getZ();
 
-            for (int z = 0; z < rows.size(); z++) {
-                String row = rows.get(z);
-                for (int x = 0; x < row.length(); x++) {
-                    char symbol = row.charAt(x);
-                    String blockId = palette.get(String.valueOf(symbol));
-
-                    if (blockId == null) continue;
-
-                    // Mark positions that Minecraft will auto-generate
-                    if (isTallBlock(blockId)) {
-                        String aboveKey = x + "," + (y + 1) + "," + z;
-                        skipPositions.put(aboveKey, "door_top");
-                    }
-
-                    if (isWideBlock(blockId)) {
-                        String nextXKey = (x + 1) + "," + y + "," + z;
-                        skipPositions.put(nextXKey, "bed_part");
-                    }
-                }
+            if (isTallBlock(blockId)) {
+                skipPositions.put(x + "," + (y + 1) + "," + z, "auto_generated");
+            }
+            if (isWideBlock(blockId)) {
+                skipPositions.put((x + 1) + "," + y + "," + z, "auto_generated");
             }
         }
 
-        // SECOND PASS: Place blocks, skipping marked positions
-        for (StructureLayer layer : layers) {
-            int y = layer.getY();
-            List<String> rows = layer.getRows();
+        int blocksPlaced = 0;
+        for (com.example.structure.BlockData blockData : blocks) {
+            int x = blockData.getX(), y = blockData.getY(), z = blockData.getZ();
+            String blockId = blockData.getBlockWithStates();
+            BlockPos targetPos = startPos.offset(x, y, z - depth + 1);
+            String posKey = x + "," + y + "," + z;
 
-            for (int z = 0; z < rows.size(); z++) {
-                String row = rows.get(z);
-                for (int x = 0; x < row.length(); x++) {
-                    char symbol = row.charAt(x);
-                    String blockId = palette.get(String.valueOf(symbol));
+            if (skipPositions.containsKey(posKey) ||
+                "minecraft:air".equals(blockId) || 
+                blockId.startsWith("minecraft:air[")) {
+                continue;
+            }
 
-                    if (blockId == null) {
-                        ExampleMod.LOGGER.warn("Symbol '{}' not found in palette", symbol);
-                        continue;
-                    }
-
-                    BlockPos targetPos = startPos.offset(x, y, z - depth + 1);
-                    String posKey = x + "," + y + "," + z;
-
-                    // Skip if this position was marked as auto-generated
-                    if (skipPositions.containsKey(posKey)) {
-                        continue;
-                    }
-
-                    // Don't place air blocks (let Minecraft handle empty space)
-                    if ("minecraft:air".equals(blockId)) {
-                        continue;
-                    }
-
-                    if (isTallBlock(blockId)) {
-                        BlockState blockState = getBlockState(blockId);
-                        if (blockState == null) {
-                            ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
-                            continue;
-                        }
-                        
-                        level.setBlockAndUpdate(targetPos, blockState
-                                .setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
-                        
-                        BlockPos topPos = targetPos.above();
-                        level.setBlockAndUpdate(topPos, blockState
-                                .setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
-                        
-                        blocksPlaced += 2;
-                        continue;
-                    }
-
-                    if (isWideBlock(blockId)) {
-                        BlockState blockState = getBlockState(blockId);
-                        if (blockState == null) {
-                            ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
-                            continue;
-                        }
-                        
-                        // Calculate head position based on player's facing direction
-                        BlockPos headPos = targetPos.relative(playerFacing);
-                        
-                        level.setBlockAndUpdate(targetPos, blockState
-                                .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.FOOT)
-                                .setValue(net.minecraft.world.level.block.BedBlock.FACING, playerFacing));
-                        
-                        level.setBlockAndUpdate(headPos, blockState
-                                .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD)
-                                .setValue(net.minecraft.world.level.block.BedBlock.FACING, playerFacing));
-                        
-                        blocksPlaced += 2;
-                        continue;
-                    }
-
-                    BlockState blockState = getBlockState(blockId);
-                    if (blockState == null) {
-                        ExampleMod.LOGGER.warn("Invalid block ID: {}", blockId);
-                        continue;
-                    }
-
-                    level.setBlockAndUpdate(targetPos, blockState);
-                    blocksPlaced++;
+            if (isTallBlock(blockId)) {
+                BlockState state = getBlockState(blockId);
+                if (state != null) {
+                    level.setBlockAndUpdate(targetPos, state.setValue(
+                        net.minecraft.world.level.block.DoorBlock.HALF, 
+                        net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
+                    level.setBlockAndUpdate(targetPos.above(), state.setValue(
+                        net.minecraft.world.level.block.DoorBlock.HALF,
+                        net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+                    blocksPlaced += 2;
                 }
+                continue;
+            }
+
+            if (isWideBlock(blockId)) {
+                BlockState state = getBlockState(blockId);
+                if (state != null) {
+                    net.minecraft.core.Direction facing = state.hasProperty(net.minecraft.world.level.block.BedBlock.FACING) 
+                        ? state.getValue(net.minecraft.world.level.block.BedBlock.FACING) 
+                        : placer.getDirection();
+                    
+                    level.setBlockAndUpdate(targetPos, state
+                        .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.FOOT)
+                        .setValue(net.minecraft.world.level.block.BedBlock.FACING, facing));
+                    level.setBlockAndUpdate(targetPos.relative(facing), state
+                        .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD)
+                        .setValue(net.minecraft.world.level.block.BedBlock.FACING, facing));
+                    blocksPlaced += 2;
+                }
+                continue;
+            }
+
+            if (blockId.equals("torch") || blockId.startsWith("torch[")) {
+                net.minecraft.core.Direction attachTo = findAdjacentSolidWall(level, targetPos);
+                if (attachTo != null) {
+                    BlockState wallTorch = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("wall_torch")).defaultBlockState();
+                    if (wallTorch != null && wallTorch.hasProperty(net.minecraft.world.level.block.WallTorchBlock.FACING)) {
+                        level.setBlockAndUpdate(targetPos, wallTorch.setValue(net.minecraft.world.level.block.WallTorchBlock.FACING, attachTo));
+                        blocksPlaced++;
+                        continue;
+                    }
+                }
+            }
+
+            BlockState state = getBlockState(blockId);
+            if (state != null) {
+                level.setBlockAndUpdate(targetPos, state);
+                blocksPlaced++;
             }
         }
 
@@ -234,6 +188,22 @@ public class AIBuildingBlock extends Block {
         return blockId != null && blockId.contains("_bed");
     }
 
+    private net.minecraft.core.Direction findAdjacentSolidWall(ServerLevel level, BlockPos pos) {
+        for (net.minecraft.core.Direction dir : new net.minecraft.core.Direction[]{
+            net.minecraft.core.Direction.NORTH,
+            net.minecraft.core.Direction.SOUTH,
+            net.minecraft.core.Direction.EAST,
+            net.minecraft.core.Direction.WEST
+        }) {
+            BlockPos adjacent = pos.relative(dir);
+            BlockState adjacentState = level.getBlockState(adjacent);
+            if (adjacentState.isSolid() && !adjacentState.isAir()) {
+                return dir;
+            }
+        }
+        return null;
+    }
+
     private BlockState getBlockState(String blockId) {
         try {
             String blockIdBase = blockId;
@@ -246,81 +216,48 @@ public class AIBuildingBlock extends Block {
                 
                 if (!propertiesStr.isEmpty()) {
                     for (String prop : propertiesStr.split(",")) {
-                        String[] parts = prop.split("=", 2); // Limit to 2 parts in case value contains '='
+                        String[] parts = prop.split("=", 2);
                         if (parts.length == 2) {
                             String key = parts[0].trim();
                             String value = parts[1].trim();
                             if (!key.isEmpty() && !value.isEmpty()) {
                                 properties.put(key, value);
                             }
-                        } else {
-                            ExampleMod.LOGGER.warn("Invalid property format in '{}': '{}'", blockId, prop);
                         }
                     }
                 }
             }
             
-            ResourceLocation location = ResourceLocation.parse(blockIdBase);
-            Block block = BuiltInRegistries.BLOCK.get(location);
-            
-            if (block == null) {
-                ExampleMod.LOGGER.warn("Block not found: {}", blockIdBase);
-                return null;
-            }
+            Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(blockIdBase));
+            if (block == null) return null;
             
             BlockState state = block.defaultBlockState();
-            
-            // Apply properties to the block state
             for (Map.Entry<String, String> entry : properties.entrySet()) {
-                BlockState newState = applyProperty(state, entry.getKey(), entry.getValue());
-                if (newState == state) {
-                    ExampleMod.LOGGER.warn("Property {}={} could not be applied to {}", 
-                        entry.getKey(), entry.getValue(), blockIdBase);
-                }
-                state = newState;
+                state = applyProperty(state, entry.getKey(), entry.getValue());
             }
             
             return state;
         } catch (Exception e) {
-            ExampleMod.LOGGER.error("Error parsing block state: {}", blockId, e);
+            PromptCraftMod.LOGGER.error("Error parsing block state: {}", blockId, e);
             return null;
         }
     }
     
     private BlockState applyProperty(BlockState state, String propertyName, String value) {
-        if (propertyName == null || value == null || propertyName.isEmpty() || value.isEmpty()) {
-            return state;
-        }
+        if (propertyName == null || value == null) return state;
         
-        try {
-            // Find the property by name
-            for (net.minecraft.world.level.block.state.properties.Property<?> property : state.getProperties()) {
-                if (property.getName().equals(propertyName)) {
-                    return setPropertyValue(state, property, value);
-                }
+        for (net.minecraft.world.level.block.state.properties.Property<?> property : state.getProperties()) {
+            if (property.getName().equals(propertyName)) {
+                return setPropertyValue(state, property, value);
             }
-            ExampleMod.LOGGER.debug("Property '{}' not found for block {} (available: {})", 
-                propertyName, state.getBlock(), state.getProperties().stream()
-                    .map(p -> p.getName()).toList());
-        } catch (Exception e) {
-            ExampleMod.LOGGER.error("Error applying property {}={} to {}", propertyName, value, state.getBlock(), e);
         }
         return state;
     }
     
     private <T extends Comparable<T>> BlockState setPropertyValue(BlockState state, 
             net.minecraft.world.level.block.state.properties.Property<T> property, String value) {
-        try {
-            java.util.Optional<T> parsedValue = property.getValue(value);
-            if (parsedValue.isPresent()) {
-                return state.setValue(property, parsedValue.get());
-            } else {
-                ExampleMod.LOGGER.warn("Invalid value '{}' for property '{}' on block {} (valid: {})", 
-                    value, property.getName(), state.getBlock(), property.getPossibleValues());
-            }
-        } catch (Exception e) {
-            ExampleMod.LOGGER.error("Error setting property {}={} on {}", property.getName(), value, state.getBlock(), e);
-        }
-        return state;
+        return property.getValue(value)
+            .map(v -> state.setValue(property, v))
+            .orElse(state);
     }
 }
