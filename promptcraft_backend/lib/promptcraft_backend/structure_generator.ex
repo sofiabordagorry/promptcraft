@@ -160,8 +160,8 @@ defmodule PromptcraftBackend.StructureGenerator do
     body = %{
       "model" => "gpt-5.2",
       "messages" => messages,
-      "temperature" => 0.8,
-      "top_p" => 0.9
+      "temperature" => 0.2,
+      "top_p" => 1
     }
 
     case Req.post("https://api.openai.com/v1/chat/completions",
