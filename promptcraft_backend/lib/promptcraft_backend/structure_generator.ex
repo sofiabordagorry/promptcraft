@@ -58,11 +58,16 @@ defmodule PromptcraftBackend.StructureGenerator do
     with {:ok, raw} <- call_llm(messages),
          {:ok, %{"code" => py_code}} <- parse_py_response(raw),
          {:ok, blocks} <- PromptcraftBackend.PyExecutor.execute(py_code) do
+      # Apply automatic corrections
+      corrected_blocks = blocks
+        |> fix_stair_facing()
+        |> replace_glass_pane()
+      
       # Calculate structure size
-      structure = blocks_to_simple_structure(blocks)
+      structure = blocks_to_simple_structure(corrected_blocks)
 
       # Debug: Save generated structure and Python code
-      save_debug_output(prompt, py_code, blocks, structure, raw)
+      save_debug_output(prompt, py_code, corrected_blocks, structure, raw)
       {:ok, structure}
     else
       {:error, reason} -> {:error, reason}
@@ -110,6 +115,66 @@ defmodule PromptcraftBackend.StructureGenerator do
       [_, py_code] -> {:ok, %{"code" => py_code}}
       nil -> {:error, :no_code_found}
     end
+  end
+
+  defp fix_stair_facing(blocks) do
+    # Separate stairs from other blocks
+    {stair_blocks, other_blocks} = Enum.split_with(blocks, fn b ->
+      String.contains?(b.block, "stairs")
+    end)
+
+    # Group stairs by their column (x or z position) to find sequences
+    corrected_stairs = Enum.map(stair_blocks, fn stair ->
+      # Find the next stair in sequence (same x or z, y is +1)
+      next_stair = Enum.find(stair_blocks, fn other ->
+        other != stair && other.y == stair.y + 1 &&
+        (other.x == stair.x || other.z == stair.z)
+      end)
+
+      case next_stair do
+        nil -> 
+          # No next stair found, keep original facing or use default
+          stair
+        
+        next_stair ->
+          # Determine climb direction and set facing to match climb direction
+          correct_facing = cond do
+            next_stair.z > stair.z -> "south"  # Climbing south → face south
+            next_stair.z < stair.z -> "north"  # Climbing north → face north
+            next_stair.x > stair.x -> "east"   # Climbing east → face east
+            next_stair.x < stair.x -> "west"   # Climbing west → face west
+            true -> get_in(stair.block_states, ["facing"]) || "north"
+          end
+
+          # Update block_states with correct facing
+          updated_states = Map.put(stair.block_states || %{}, "facing", correct_facing)
+          %{stair | block_states: updated_states}
+      end
+    end)
+
+    # Combine corrected stairs with other blocks
+    corrected_stairs ++ other_blocks
+  end
+
+  defp replace_glass_pane(blocks) do
+    Enum.map(blocks, fn block ->
+      if String.contains?(block.block, "glass_pane") do
+        # Replace any glass_pane variant with glass (handle both colored and plain)
+        new_block = cond do
+          # Plain glass_pane -> glass
+          block.block == "minecraft:glass_pane" -> "minecraft:glass"
+          # Colored glass_pane (e.g., white_glass_pane -> white_glass)
+          String.ends_with?(block.block, "_glass_pane") -> 
+            String.replace(block.block, "_glass_pane", "_glass")
+          # Fallback
+          true -> String.replace(block.block, "glass_pane", "glass")
+        end
+        
+        %{block | block: new_block}
+      else
+        block
+      end
+    end)
   end
 
   defp blocks_to_simple_structure(blocks) do
@@ -204,7 +269,7 @@ defmodule PromptcraftBackend.StructureGenerator do
       end
 
     body = %{
-      "model" => "claude-opus-4-20250514",
+      "model" => "claude-opus-4-5",
       "max_tokens" => 8096,
       "temperature" => 0.2,
       "system" => system_content,

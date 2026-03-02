@@ -197,6 +197,11 @@ defmodule PromptcraftBackend.PromptBuilder do
     • Exceptions: towers, castles, churches, monuments can have multiple floors
 
     MULTI-STORY BUILDINGS (two-story houses, towers, etc.) - CRITICAL:
+    • PLANNING ORDER (follow this sequence):
+      1. Decide staircase location FIRST (before placing ANY furniture)
+      2. Build floors and cut staircase holes
+      3. Place stairs
+      4. THEN add furniture AROUND the staircase (never on it)
     • Second floor placement (the FLOOR itself, not the room):
       - The floor MUST extend to the FULL footprint, INCLUDING under the exterior walls
       - BAD: building 7x7 (x=0 to x=6), second floor only x=1 to x=5 (leaves gaps at walls!)
@@ -217,12 +222,15 @@ defmodule PromptcraftBackend.PromptBuilder do
         - Bottom stair: x=2, y=1, z=2
         - Middle stair: x=2, y=2, z=3  
         - Top stair: x=2, y=3, z=4
+        - Landing position: z=5 (where player steps after last stair - must be SOLID FLOOR)
         - Note: Z increases (2→3→4) means going SOUTH in Minecraft coordinates
       
-      STEP 3 - Cut hole in second floor for BOTH stairs AND headroom:
-        - Hole must cover: stairs position (z=2,3,4) PLUS one block ahead for head space
-        - fillRegion(start_x+2, start_y+4, start_z+2, start_x+2, start_y+4, start_z+5, "air")
-        - This creates 4-block hole: z=2,3,4,5 (stairs + clearance)
+      STEP 3 - Cut hole in second floor ONLY where stairs are (DO THIS IMMEDIATELY):
+        - CRITICAL: Cut the hole BEFORE adding ANY furniture, walls, or decorations
+        - Hole must cover ONLY the stair positions: z=2,3,4 (NOT z=5)
+        - fillRegion(start_x+2, start_y+4, start_z+2, start_x+2, start_y+4, start_z+4, "air")
+        - This creates 3-block hole: z=2,3,4 (exactly where the stairs are)
+        - The next block (z=5) remains SOLID FLOOR for the player to step onto
       
       STEP 4 - Place stairs with CORRECT facing direction:
         - CRITICAL: "facing" points toward where you're WALKING TO (the upper direction)
@@ -231,15 +239,26 @@ defmodule PromptcraftBackend.PromptBuilder do
         - X increases = walking EAST → facing: "east"
         - X decreases = walking WEST → facing: "west"
         - Example for our south-going stairs:
-          placeBlock(start_x+2, start_y+1, start_z+2, "oak_stairs", block_states={"facing": "south"})
-          placeBlock(start_x+2, start_y+2, start_z+3, "oak_stairs", block_states={"facing": "south"})
-          placeBlock(start_x+2, start_y+3, start_z+4, "oak_stairs", block_states={"facing": "south"})
+          placeBlock(start_x+2, start_y+1, start_z+2, "oak_stairs", block_states={"facing": "south", "half": "bottom"})
+          placeBlock(start_x+2, start_y+2, start_z+3, "oak_stairs", block_states={"facing": "south", "half": "bottom"})
+          placeBlock(start_x+2, start_y+3, start_z+4, "oak_stairs", block_states={"facing": "south", "half": "bottom"})
       
-      KEY RULES:
+      STEP 5 - ENSURE NO OBSTRUCTIONS:
+        - DO NOT place ANY blocks at the staircase coordinates at ANY height (y=1 to y=4)
+        - DO NOT place walls, furniture, or decorations that block the stairs
+        - Leave the entire vertical column (x=2, z=2-4, y=1-4) completely clear except for the stairs
+        - The landing block (z=5 at y=4) MUST remain solid floor - do NOT cut it
+        - Check that no first-floor furniture overlaps with stair positions
+        - Check that no second-floor walls block the stair exit
+      
+      KEY RULES FOR STAIRS:
       - All stairs at SAME X coordinate (or SAME Z if going east/west)
-      - Hole must be 1 block LONGER than stairs (for headroom)
+      - Hole must be EXACTLY the stair positions (NOT longer - player needs solid floor to step onto)
       - "facing" = direction you walk TOWARD (south if Z increases, north if Z decreases, etc.)
       - Player needs 2-block height above each step to walk
+      - After the last stair, there MUST be a solid floor block for the landing
+      - NEVER place furniture, chests, beds, or any blocks at stair coordinates
+      - Plan furniture layout AROUND the stairs, not through them
 
     • This ensures solid construction with no visual gaps or holes
 

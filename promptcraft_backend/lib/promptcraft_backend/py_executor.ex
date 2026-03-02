@@ -73,6 +73,16 @@ defmodule PromptcraftBackend.PyExecutor do
         normalized = name.strip()
         if not normalized.startswith('minecraft:'):
             normalized = 'minecraft:' + normalized
+        
+        # Auto-replace glass_pane with glass (glass_pane is not allowed)
+        if 'glass_pane' in normalized:
+            if normalized == 'minecraft:glass_pane':
+                normalized = 'minecraft:glass'
+            elif normalized.endswith('_glass_pane'):
+                normalized = normalized.replace('_glass_pane', '_glass')
+            else:
+                normalized = normalized.replace('glass_pane', 'glass')
+        
         base_name = normalized.split('[')[0]
         if base_name not in allowed_blocks:
             print(f'Block not allowed: {base_name}', file=sys.stderr)
