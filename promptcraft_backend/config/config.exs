@@ -38,6 +38,12 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# LLM Provider configuration
+# Options: :gpt or :anthropic
+config :promptcraft_backend, :llm,
+  provider: :anthropic,
+  openai_model: "gpt-5.2"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

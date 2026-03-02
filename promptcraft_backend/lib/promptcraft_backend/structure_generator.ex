@@ -155,10 +155,21 @@ defmodule PromptcraftBackend.StructureGenerator do
   end
 
   defp call_llm(messages) do
+    provider = Application.get_env(:promptcraft_backend, :llm)[:provider] || :gpt
+
+    case provider do
+      :gpt -> call_gpt(messages)
+      :anthropic -> call_anthropic(messages)
+      _ -> {:error, "Unknown provider: #{provider}"}
+    end
+  end
+
+  defp call_gpt(messages) do
     api_key = System.fetch_env!("OPENAI_API_KEY")
+    model = Application.get_env(:promptcraft_backend, :llm)[:openai_model] || "gpt-5.2"
 
     body = %{
-      "model" => "gpt-5.2",
+      "model" => model,
       "messages" => messages,
       "temperature" => 0.2,
       "top_p" => 1
@@ -176,6 +187,42 @@ defmodule PromptcraftBackend.StructureGenerator do
       {:ok, %Req.Response{status: 200, body: %{"choices" => [choice | _]}}} ->
         content = get_in(choice, ["message", "content"])
         {:ok, content}
+
+      other ->
+        {:error, other}
+    end
+  end
+
+  defp call_anthropic(messages) do
+    api_key = System.fetch_env!("ANTHROPIC_API_KEY")
+
+    # Anthropic uses different message format: separate system from messages
+    {system_content, user_messages} =
+      case messages do
+        [%{"role" => "system", "content" => sys} | rest] -> {sys, rest}
+        other -> {"", other}
+      end
+
+    body = %{
+      "model" => "claude-opus-4-20250514",
+      "max_tokens" => 8096,
+      "temperature" => 0.2,
+      "system" => system_content,
+      "messages" => user_messages
+    }
+
+    case Req.post("https://api.anthropic.com/v1/messages",
+           json: body,
+           headers: [
+             {"x-api-key", api_key},
+             {"anthropic-version", "2023-06-01"},
+             {"content-type", "application/json"}
+           ],
+           receive_timeout: 120_000,
+           connect_options: [timeout: 30_000]
+         ) do
+      {:ok, %Req.Response{status: 200, body: %{"content" => [%{"text" => text} | _]}}} ->
+        {:ok, text}
 
       other ->
         {:error, other}
