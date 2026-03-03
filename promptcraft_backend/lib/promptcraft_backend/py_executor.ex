@@ -69,6 +69,17 @@ defmodule PromptcraftBackend.PyExecutor do
     blocks = []
     allowed_blocks = set(#{allowed_blocks_json})
 
+    # Block substitution mapping for variants not in allowed list
+    BLOCK_SUBSTITUTIONS = {
+        '_stairs': '',
+        '_slab': '',
+        '_wall': '_block',
+        '_fence': '_planks',
+        '_gate': '_planks',
+        '_door': '_planks',
+        '_trapdoor': '_planks'
+    }
+
     def normalize_block_name(name):
         normalized = name.strip()
         if not normalized.startswith('minecraft:'):
@@ -84,9 +95,19 @@ defmodule PromptcraftBackend.PyExecutor do
                 normalized = normalized.replace('glass_pane', 'glass')
         
         base_name = normalized.split('[')[0]
+        
+        # Try substitutions if not allowed
         if base_name not in allowed_blocks:
+            for suffix, replacement in BLOCK_SUBSTITUTIONS.items():
+                if base_name.endswith(suffix):
+                    substituted = base_name.replace(suffix, replacement)
+                    if substituted in allowed_blocks:
+                        print(f'Block substituted: {base_name} -> {substituted}', file=sys.stderr)
+                        return substituted
+            
             print(f'Block not allowed: {base_name}', file=sys.stderr)
             return None
+        
         return normalized
 
     def fillRegion(x1, y1, z1, x2, y2, z2, block_type, **options):
