@@ -120,6 +120,30 @@ defmodule PromptcraftBackend.PromptBuilder do
     • Double-check coordinates: if you build a wall at (x, y, z), do NOT place furniture at (x, y±N, z)
     • Furniture coordinates must be strictly BETWEEN wall coordinates, not equal to them
 
+    DOOR OPENINGS (CRITICAL):
+    • Doors need a complete frame: walls on LEFT, RIGHT, and ABOVE the opening
+    • Example: Door at (x, y+1, z), opening is y+1 and y+2 (door is 2 blocks tall):
+      - LEFT pillar: (x-1, y+1 to y+4, z) must be solid wall
+      - RIGHT pillar: (x+1, y+1 to y+4, z) must be solid wall  
+      - ABOVE door: (x, y+3 to y+4, z) must be solid wall
+    • When building wall with door:
+      1. Build wall sections on both SIDES of door (not just far away)
+      2. Build wall section ABOVE door (starting at y+3)
+      3. Place door in the middle opening
+    • Example for south wall (z=0) with door at x=4, walls y=1 to y=4:
+      CORRECT:
+        fillRegion(x, y+1, z, x+2, y+4, z, "planks")           # left wall section
+        fillRegion(x+3, y+1, z, x+3, y+4, z, "planks")         # LEFT PILLAR next to door
+        fillRegion(x+4, y+3, z, x+4, y+4, z, "planks")         # ABOVE door
+        fillRegion(x+5, y+1, z, x+5, y+4, z, "planks")         # RIGHT PILLAR next to door
+        fillRegion(x+6, y+1, z, x+8, y+4, z, "planks")         # right wall section
+        placeBlock(x+4, y+1, z, "oak_door", ...)               # door in opening
+      WRONG (missing side pillars):
+        fillRegion(x, y+1, z, x+2, y+4, z, "planks")           # left wall
+        fillRegion(x+4, y+3, z, x+4, y+4, z, "planks")         # above door
+        fillRegion(x+6, y+1, z, x+8, y+4, z, "planks")         # right wall
+        # MISSING: x=3 and x=5 pillars!
+
     BLOCK ORIENTATION:
     • Doors: facing should point AWAY from wall (into the room)
       - Front door on south wall (z=0): facing: "south"
@@ -132,6 +156,18 @@ defmodule PromptcraftBackend.PromptBuilder do
       - BOTH foot AND head positions must be inside interior (not on perimeter walls)
       - Example: if walls are at z=0 and z=6, bed facing "south" with foot at z=1 puts head at z=2 (OK)
       - BAD: bed facing "south" with foot at z=5 puts head at z=6 (head is IN the wall!)
+    • Stairs as chairs (CRITICAL for dining rooms, restaurants, seating areas):
+      - IMPORTANT: For stairs, "facing" indicates where the LOWER part points, NOT where you sit
+      - The seat (higher part) faces the OPPOSITE direction from "facing"
+      - To make a chair face TOWARD a table, use facing in the OPPOSITE direction:
+      - If table is at (x, y, z) and chair is at (x-1, y, z), chair facing must be "west" (seat faces east toward table)
+      - If table is at (x, y, z) and chair is at (x+1, y, z), chair facing must be "east" (seat faces west toward table)
+      - If table is at (x, y, z) and chair is at (x, y, z-1), chair facing must be "north" (seat faces south toward table)
+      - If table is at (x, y, z) and chair is at (x, y, z+1), chair facing must be "south" (seat faces north toward table)
+      - Example dining setup:
+        * Table at (x, y, z) → chair at (x-1, y, z) with facing: "west" (NOT "east")
+        * Table at (x, y, z) → chair at (x+1, y, z) with facing: "east" (NOT "west")
+      - Rule of thumb: facing points AWAY from the table, so the seat points TOWARD the table
     • Chests/Furnaces: Always specify facing direction
     • Logs: Specify axis: "x", "y", or "z" (y for vertical posts)
     • Stairs: Always specify facing and half: "bottom" or "top"
