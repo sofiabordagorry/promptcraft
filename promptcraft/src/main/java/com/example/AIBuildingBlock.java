@@ -73,6 +73,8 @@ public class AIBuildingBlock extends Block {
 
             BlockPos adjustedPos = calculateSafeStartPosition(pos, placer.getDirection(), structure.getSize());
             buildStructure(serverLevel, adjustedPos, structure, placer);
+            
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
 
         } catch (IllegalArgumentException e) {
             PromptCraftMod.LOGGER.error("Invalid structure UUID: {}", structureIdStr, e);
