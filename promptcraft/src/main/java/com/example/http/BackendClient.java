@@ -34,9 +34,9 @@ public class BackendClient {
                 requestBody.addProperty("prompt", prompt);
 
                 JsonObject maxSize = new JsonObject();
-                maxSize.addProperty("width", 50);
-                maxSize.addProperty("depth", 50);
-                maxSize.addProperty("height", 50);
+                maxSize.addProperty("width", 100);
+                maxSize.addProperty("depth", 100);
+                maxSize.addProperty("height", 100);
                 requestBody.add("max_size", maxSize);
 
                 HttpRequest request = HttpRequest.newBuilder()

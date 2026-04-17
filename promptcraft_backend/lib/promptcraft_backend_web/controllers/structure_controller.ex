@@ -2,7 +2,7 @@ defmodule PromptcraftBackendWeb.StructureController do
   use PromptcraftBackendWeb, :controller
 
   def generate(conn, %{"prompt" => prompt} = params) do
-    max_size = Map.get(params, "max_size", %{"width" => 50, "depth" => 50, "height" => 50})
+    max_size = Map.get(params, "max_size", %{"width" => 100, "depth" => 100, "height" => 100})
     style = Map.get(params, "style", nil)
 
     case PromptcraftBackend.StructureGenerator.generate(prompt, max_size, style) do
