@@ -271,7 +271,6 @@ defmodule PromptcraftBackend.StructureGenerator do
     body = %{
       "model" => "claude-opus-4-7",
       "max_tokens" => 8096,
-      "temperature" => 0.2,
       "system" => system_content,
       "messages" => user_messages
     }
