@@ -5,7 +5,7 @@ AI-powered Minecraft structure generation from natural language descriptions.
 Promptcraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoenix backend powered by LLMs. Players describe structures using the `/askAI` command, receive a special builder block, and place it in the world to automatically generate the structure.
 
 - `/askAI <description>` command in Minecraft
-- Backend powered by OpenAI GPT-5.2 (configurable)
+- Backend powered by Claude (Anthropic) or OpenAI GPT (configurable)
 - LLM generates Python code that is executed server-side
 - Style-based generation with auto-detection (tree, house, village, furniture)
 - Custom builder block that constructs structures dynamically
@@ -23,7 +23,7 @@ Promptcraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoeni
 - Erlang 27
 - Elixir 1.18
 - Python 3.8+
-- OpenAI API key
+- Anthropic API key (or OpenAI API key if using GPT provider)
 
 ### Backend Setup
 
@@ -31,7 +31,7 @@ Promptcraft integrates Minecraft Java Edition (Fabric mod) with an Elixir Phoeni
 cd promptcraft_backend
 
 # Configure API key (PowerShell)
-$env:OPENAI_API_KEY="your-api-key"
+$env:ANTHROPIC_API_KEY="your-api-key"
 
 # Install dependencies
 mix deps.get
@@ -63,20 +63,17 @@ cd Promptcraft
 
 ## Configuration
 
-### Changing the LLM Model
+### Changing the LLM Provider
 
-Edit `promptcraft_backend/lib/promptcraft_backend/structure_generator.ex`:
+Edit `promptcraft_backend/config/config.exs`:
 
 ```elixir
-body = %{
-  "model" => "gpt-5.2",  # Change here
-  "temperature" => 0.4,
-  "top_p" => 0.9,
-  ...
-}
+config :promptcraft_backend, :llm,
+  provider: :anthropic,   # :anthropic or :gpt
+  openai_model: "gpt-5.2" # used when provider is :gpt
 ```
 
-Available models: `gpt-5.2`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`
+Set the `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` environment variable to match the chosen provider.
 
 ### Adding Allowed Blocks
 
@@ -190,11 +187,11 @@ Generate a Minecraft structure from a text prompt.
 ### Running Tests
 
 ```bash
-# Backend tests (excluding OpenAI integration)
+# Backend tests (excluding LLM integration)
 cd promptcraft_backend
 mix test --exclude integration
 
-# Backend tests with OpenAI (requires API key)
+# Backend tests with LLM (requires API key)
 mix test --include integration
 
 # Mod build
@@ -212,7 +209,7 @@ cd Promptcraft
 
 **Backend (Elixir/Phoenix):**
 - StructureController receives HTTP requests
-- StructureGenerator calls OpenAI API with structured prompt
+- StructureGenerator calls the configured LLM (Anthropic or OpenAI) with a structured prompt
 - Returns JSON structure definition
 - Configurable block list from text file
 - PyExecutor runs Python code in sandboxed environment
