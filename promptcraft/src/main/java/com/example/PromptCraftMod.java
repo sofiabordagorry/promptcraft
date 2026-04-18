@@ -13,6 +13,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.network.chat.Style;
+
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +53,15 @@ public class PromptCraftMod implements ModInitializer {
                                                 var tag = builderBlock.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
                                                 tag.putString("structure_id", structureId.toString());
                                                 builderBlock.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                                                builderBlock.set(DataComponents.CUSTOM_NAME,
+                                                    Component.literal("AI Builder Block")
+                                                        .withStyle(Style.EMPTY.withItalic(false)));
+                                                builderBlock.set(DataComponents.LORE,
+                                                    new ItemLore(List.of(
+                                                        Component.literal("Prompt: " + prompt)
+                                                            .withStyle(Style.EMPTY.withItalic(false)
+                                                                .withColor(0xAAAAAA))
+                                                    )));
                                                 player.getInventory().add(builderBlock);
                                                 player.sendSystemMessage(Component.literal("Structure generated! Check your inventory."));
                                             },
