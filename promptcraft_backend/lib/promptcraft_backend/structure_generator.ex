@@ -62,6 +62,7 @@ defmodule PromptcraftBackend.StructureGenerator do
       corrected_blocks = blocks
         |> fix_stair_facing()
         |> replace_glass_pane()
+        |> fix_door_tops()
       
       # Calculate structure size
       structure = blocks_to_simple_structure(corrected_blocks)
@@ -131,22 +132,27 @@ defmodule PromptcraftBackend.StructureGenerator do
         (other.x == stair.x || other.z == stair.z)
       end)
 
-      case next_stair do
-        nil -> 
-          # No next stair found, keep original facing or use default
+      # Also look for the previous stair (y-1) to handle the last stair in a sequence
+      prev_stair = Enum.find(stair_blocks, fn other ->
+        other != stair && other.y == stair.y - 1 &&
+        (other.x == stair.x || other.z == stair.z)
+      end)
+
+      neighbour = next_stair || prev_stair
+
+      case neighbour do
+        nil ->
           stair
-        
-        next_stair ->
-          # Determine climb direction and set facing to match climb direction
+
+        neighbour ->
           correct_facing = cond do
-            next_stair.z > stair.z -> "south"  # Climbing south → face south
-            next_stair.z < stair.z -> "north"  # Climbing north → face north
-            next_stair.x > stair.x -> "east"   # Climbing east → face east
-            next_stair.x < stair.x -> "west"   # Climbing west → face west
+            neighbour.z > stair.z -> "south"
+            neighbour.z < stair.z -> "north"
+            neighbour.x > stair.x -> "east"
+            neighbour.x < stair.x -> "west"
             true -> get_in(stair.block_states, ["facing"]) || "north"
           end
 
-          # Update block_states with correct facing
           updated_states = Map.put(stair.block_states || %{}, "facing", correct_facing)
           %{stair | block_states: updated_states}
       end
@@ -154,6 +160,65 @@ defmodule PromptcraftBackend.StructureGenerator do
 
     # Combine corrected stairs with other blocks
     corrected_stairs ++ other_blocks
+  end
+
+  defp fix_door_tops(blocks) do
+    block_map = Map.new(blocks, fn b -> {{b.x, b.y, b.z}, b} end)
+
+    doors =
+      blocks
+      |> Enum.filter(fn b -> String.contains?(b.block, "_door") and not String.contains?(b.block, "trapdoor") end)
+      |> Enum.filter(fn b ->
+        half = get_in(b.block_states || %{}, ["half"])
+        half == "lower" or is_nil(half)
+      end)
+      |> Enum.uniq_by(fn b -> {b.x, b.z} end)
+
+    fill_blocks =
+      Enum.flat_map(doors, fn door ->
+        wall_material = find_wall_material(door, blocks)
+
+        # Door occupies door.y and door.y+1; fill door.y+2 and door.y+3 if missing or air
+        Enum.flat_map([door.y + 2, door.y + 3], fn fill_y ->
+          existing = Map.get(block_map, {door.x, fill_y, door.z})
+
+          if is_nil(existing) or existing.block == "minecraft:air" do
+            [%{x: door.x, y: fill_y, z: door.z, block: wall_material, block_states: %{}}]
+          else
+            []
+          end
+        end)
+      end)
+
+    existing_positions = MapSet.new(fill_blocks, fn b -> {b.x, b.y, b.z} end)
+
+    kept_blocks = Enum.reject(blocks, fn b ->
+      MapSet.member?(existing_positions, {b.x, b.y, b.z})
+    end)
+
+    kept_blocks ++ fill_blocks
+  end
+
+  defp find_wall_material(door, blocks) do
+    # Look for non-air, non-door blocks in the same vertical column (same x OR same z as door)
+    # that are at the same height range — these are the wall blocks
+    candidates =
+      blocks
+      |> Enum.filter(fn b ->
+        (b.x == door.x or b.z == door.z) and
+          b.y >= door.y and b.y <= door.y + 3 and
+          not String.contains?(b.block, "_door") and
+          b.block != "minecraft:air" and
+          not String.contains?(b.block, "glass") and
+          not String.contains?(b.block, "stairs") and
+          not (b.x == door.x and b.z == door.z)
+      end)
+      |> Enum.map(& &1.block)
+
+    candidates
+    |> Enum.frequencies()
+    |> Enum.max_by(fn {_, count} -> count end, fn -> {"minecraft:cobblestone", 0} end)
+    |> elem(0)
   end
 
   defp replace_glass_pane(blocks) do

@@ -105,7 +105,7 @@ public class AIBuildingBlock extends Block {
             String blockId = blockData.getBlock();
             int x = blockData.getX(), y = blockData.getY(), z = blockData.getZ();
 
-            if (isTallBlock(blockId)) {
+            if (isTallBlock(blockId) && !blockId.contains("half=upper")) {
                 skipPositions.put(x + "," + (y + 1) + "," + z, "auto_generated");
             }
             if (isWideBlock(blockId)) {
