@@ -1,27 +1,33 @@
 package com.example.structure;
 
-import java.util.Map;
+import net.minecraft.server.MinecraftServer;
+
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class StructureRegistry {
-    private static final Map<UUID, StructureDefinition> structures = new ConcurrentHashMap<>();
+    private static MinecraftServer server;
+
+    public static void init(MinecraftServer minecraftServer) {
+        server = minecraftServer;
+    }
+
+    private static StructurePersistentState getState() {
+        return StructurePersistentState.getOrCreate(server.overworld());
+    }
 
     public static UUID register(StructureDefinition structure) {
-        UUID id = UUID.randomUUID();
-        structures.put(id, structure);
-        return id;
+        return getState().register(structure);
     }
 
     public static StructureDefinition get(UUID id) {
-        return structures.get(id);
+        return getState().get(id);
     }
 
     public static boolean has(UUID id) {
-        return structures.containsKey(id);
+        return getState().has(id);
     }
 
     public static void remove(UUID id) {
-        structures.remove(id);
+        getState().remove(id);
     }
 }

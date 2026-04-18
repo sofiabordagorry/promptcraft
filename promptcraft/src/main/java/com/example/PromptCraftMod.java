@@ -5,6 +5,7 @@ import com.example.structure.StructureRegistry;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.MessageArgument;
 import net.minecraft.core.component.DataComponents;
@@ -25,6 +26,10 @@ public class PromptCraftMod implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("Initializing Promptcraft...");
         ModBlocks.register();
+
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            StructureRegistry.init(server);
+        });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
