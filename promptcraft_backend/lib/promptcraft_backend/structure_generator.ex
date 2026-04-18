@@ -268,8 +268,10 @@ defmodule PromptcraftBackend.StructureGenerator do
         other -> {"", other}
       end
 
+    model = Application.get_env(:promptcraft_backend, :llm)[:anthropic_model] || "claude-opus-4-7"
+
     body = %{
-      "model" => "claude-opus-4-7",
+      "model" => model,
       "max_tokens" => 8096,
       "system" => system_content,
       "messages" => user_messages

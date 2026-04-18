@@ -69,8 +69,9 @@ Edit `promptcraft_backend/config/config.exs`:
 
 ```elixir
 config :promptcraft_backend, :llm,
-  provider: :anthropic,   # :anthropic or :gpt
-  openai_model: "gpt-5.2" # used when provider is :gpt
+  provider: :anthropic,             # :anthropic or :gpt
+  anthropic_model: "claude-opus-4-7", # used when provider is :anthropic
+  openai_model: "gpt-5.2"          # used when provider is :gpt
 ```
 
 Set the `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` environment variable to match the chosen provider.

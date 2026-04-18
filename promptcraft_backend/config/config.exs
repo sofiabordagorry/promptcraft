@@ -42,6 +42,7 @@ config :phoenix, :json_library, Jason
 # Options: :gpt or :anthropic
 config :promptcraft_backend, :llm,
   provider: :anthropic,
+  anthropic_model: "claude-opus-4-7",
   openai_model: "gpt-5.2"
 
 # Import environment specific config. This must remain at the bottom
