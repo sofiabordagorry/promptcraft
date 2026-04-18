@@ -308,6 +308,11 @@ defmodule PromptcraftBackend.PromptBuilder do
       Layer y=5: stairs at x=0 (facing east) + planks x=1-5 + stairs at x=6 (facing west)
       Layer y=6: stairs at x=1 (facing east) + planks x=2-4 + stairs at x=5 (facing west)
       Layer y=7: stairs at x=2 (facing east) + planks x=3 + stairs at x=4 (facing west)
+    • ROOF STAIR FACING RULE (CRITICAL - applies to EVERY layer including the topmost):
+      - Left-side stairs (x < center): ALWAYS facing east (toward center), no exceptions
+      - Right-side stairs (x > center): ALWAYS facing west (toward center), no exceptions
+      - The direction never changes regardless of how high or close to the peak you are
+      - COMMON MISTAKE: setting both top-layer stairs to "west" — the left one MUST be "east"
     • Gable ends (north/south walls):
       - If roof extends beyond building (overhang), FILL gable triangles with wall material
       - Don't leave open gaps at roof ends

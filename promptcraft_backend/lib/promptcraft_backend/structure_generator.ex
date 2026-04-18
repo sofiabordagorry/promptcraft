@@ -63,6 +63,7 @@ defmodule PromptcraftBackend.StructureGenerator do
         |> fix_stair_facing()
         |> replace_glass_pane()
         |> fix_door_tops()
+        |> fix_bed_facing()
       
       # Calculate structure size
       structure = blocks_to_simple_structure(corrected_blocks)
@@ -119,47 +120,104 @@ defmodule PromptcraftBackend.StructureGenerator do
   end
 
   defp fix_stair_facing(blocks) do
-    # Separate stairs from other blocks
     {stair_blocks, other_blocks} = Enum.split_with(blocks, fn b ->
       String.contains?(b.block, "stairs")
     end)
 
-    # Group stairs by their column (x or z position) to find sequences
     corrected_stairs = Enum.map(stair_blocks, fn stair ->
-      # Find the next stair in sequence (same x or z, y is +1)
-      next_stair = Enum.find(stair_blocks, fn other ->
-        other != stair && other.y == stair.y + 1 &&
-        (other.x == stair.x || other.z == stair.z)
+      # Roof stairs are horizontal rows: same (x, y), different z.
+      # They should not be touched — only fix walkable internal staircases.
+      is_roof_stair = Enum.any?(stair_blocks, fn other ->
+        other != stair && other.x == stair.x && other.y == stair.y
       end)
 
-      # Also look for the previous stair (y-1) to handle the last stair in a sequence
-      prev_stair = Enum.find(stair_blocks, fn other ->
-        other != stair && other.y == stair.y - 1 &&
-        (other.x == stair.x || other.z == stair.z)
-      end)
+      if is_roof_stair do
+        stair
+      else
+        # Only use an unambiguous neighbor (exactly one candidate at that y±1 level)
+        next_candidates = Enum.filter(stair_blocks, fn other ->
+          other != stair && other.y == stair.y + 1 &&
+          (other.x == stair.x || other.z == stair.z)
+        end)
 
-      neighbour = next_stair || prev_stair
+        prev_candidates = Enum.filter(stair_blocks, fn other ->
+          other != stair && other.y == stair.y - 1 &&
+          (other.x == stair.x || other.z == stair.z)
+        end)
 
-      case neighbour do
-        nil ->
-          stair
+        next_stair = if length(next_candidates) == 1, do: List.first(next_candidates), else: nil
+        prev_stair = if length(prev_candidates) == 1, do: List.first(prev_candidates), else: nil
 
-        neighbour ->
-          correct_facing = cond do
-            neighbour.z > stair.z -> "south"
-            neighbour.z < stair.z -> "north"
-            neighbour.x > stair.x -> "east"
-            neighbour.x < stair.x -> "west"
-            true -> get_in(stair.block_states, ["facing"]) || "north"
-          end
+        case {next_stair, prev_stair} do
+          {nil, nil} ->
+            stair
 
-          updated_states = Map.put(stair.block_states || %{}, "facing", correct_facing)
-          %{stair | block_states: updated_states}
+          {next, _} when not is_nil(next) ->
+            correct_facing = cond do
+              next.z > stair.z -> "south"
+              next.z < stair.z -> "north"
+              next.x > stair.x -> "east"
+              next.x < stair.x -> "west"
+              true -> get_in(stair.block_states, ["facing"]) || "north"
+            end
+            %{stair | block_states: Map.put(stair.block_states || %{}, "facing", correct_facing)}
+
+          {nil, prev} ->
+            # Direction: prev → stair (continue in the same direction)
+            correct_facing = cond do
+              stair.z > prev.z -> "south"
+              stair.z < prev.z -> "north"
+              stair.x > prev.x -> "east"
+              stair.x < prev.x -> "west"
+              true -> get_in(stair.block_states, ["facing"]) || "north"
+            end
+            %{stair | block_states: Map.put(stair.block_states || %{}, "facing", correct_facing)}
+        end
       end
     end)
 
-    # Combine corrected stairs with other blocks
     corrected_stairs ++ other_blocks
+  end
+
+  defp fix_bed_facing(blocks) do
+    xs = Enum.map(blocks, & &1.x)
+    zs = Enum.map(blocks, & &1.z)
+    min_x = Enum.min(xs)
+    max_x = Enum.max(xs)
+    min_z = Enum.min(zs)
+    max_z = Enum.max(zs)
+
+    Enum.map(blocks, fn block ->
+      if String.contains?(block.block, "_bed") do
+        facing = get_in(block.block_states || %{}, ["facing"]) || "north"
+
+        {dx, dz} = case facing do
+          "north" -> {0, -1}
+          "south" -> {0, 1}
+          "east"  -> {1, 0}
+          "west"  -> {-1, 0}
+          _       -> {0, -1}
+        end
+
+        head_x = block.x + dx
+        head_z = block.z + dz
+
+        if head_x < min_x || head_x > max_x || head_z < min_z || head_z > max_z do
+          flipped = case facing do
+            "north" -> "south"
+            "south" -> "north"
+            "east"  -> "west"
+            "west"  -> "east"
+            other   -> other
+          end
+          %{block | block_states: Map.put(block.block_states || %{}, "facing", flipped)}
+        else
+          block
+        end
+      else
+        block
+      end
+    end)
   end
 
   defp fix_door_tops(blocks) do
