@@ -25,10 +25,9 @@ defmodule PromptcraftBackend.PyExecutor do
       File.write!(temp_file, full_code)
 
       # Execute with Python
-      case System.cmd("python3", [temp_file], stderr_to_stdout: true) do
+      case System.cmd("python3", [temp_file], stderr_to_stdout: false) do
         {output, 0} ->
-          # Parse the JSON output
-          case Jason.decode(output) do
+          case Jason.decode(String.trim(output)) do
             {:ok, blocks} ->
               parsed_blocks =
                 Enum.map(blocks, fn block ->
@@ -64,28 +63,38 @@ defmodule PromptcraftBackend.PyExecutor do
     """
     import json
     import sys
+    import difflib
 
     # Runtime environment for Minecraft structure building
     blocks = []
     allowed_blocks = set(#{allowed_blocks_json})
+    allowed_blocks_list = sorted(allowed_blocks)
 
-    # Block substitution mapping for variants not in allowed list
-    BLOCK_SUBSTITUTIONS = {
-        '_stairs': '',
-        '_slab': '',
-        '_wall': '_block',
-        '_fence': '_planks',
-        '_gate': '_planks',
-        '_door': '_planks',
-        '_trapdoor': '_planks'
-    }
+    def _find_closest_allowed(block_name):
+        \"\"\"Find the most similar allowed block using difflib.\"\"\"
+        # Strip minecraft: prefix for comparison
+        name = block_name.replace('minecraft:', '')
+        stripped = [b.replace('minecraft:', '') for b in allowed_blocks_list]
+
+        # Also try stripping common decorative prefixes
+        candidates = [name]
+        for prefix in ('potted_', 'dead_', 'waxed_', 'exposed_', 'weathered_', 'oxidized_'):
+            if name.startswith(prefix):
+                candidates.append(name[len(prefix):])
+
+        for candidate in candidates:
+            matches = difflib.get_close_matches(candidate, stripped, n=1, cutoff=0.4)
+            if matches:
+                return 'minecraft:' + matches[0]
+
+        return None
 
     def normalize_block_name(name):
         normalized = name.strip()
         if not normalized.startswith('minecraft:'):
             normalized = 'minecraft:' + normalized
-        
-        # Auto-replace glass_pane with glass (glass_pane is not allowed)
+
+        # Auto-replace glass_pane with glass
         if 'glass_pane' in normalized:
             if normalized == 'minecraft:glass_pane':
                 normalized = 'minecraft:glass'
@@ -93,21 +102,17 @@ defmodule PromptcraftBackend.PyExecutor do
                 normalized = normalized.replace('_glass_pane', '_glass')
             else:
                 normalized = normalized.replace('glass_pane', 'glass')
-        
+
         base_name = normalized.split('[')[0]
-        
-        # Try substitutions if not allowed
+
         if base_name not in allowed_blocks:
-            for suffix, replacement in BLOCK_SUBSTITUTIONS.items():
-                if base_name.endswith(suffix):
-                    substituted = base_name.replace(suffix, replacement)
-                    if substituted in allowed_blocks:
-                        print(f'Block substituted: {base_name} -> {substituted}', file=sys.stderr)
-                        return substituted
-            
-            print(f'Block not allowed: {base_name}', file=sys.stderr)
+            closest = _find_closest_allowed(base_name)
+            if closest:
+                print(f'Block substituted: {base_name} -> {closest}', file=sys.stderr)
+                return closest
+            print(f'Block not allowed and no substitute found: {base_name}', file=sys.stderr)
             return None
-        
+
         return normalized
 
     def fillRegion(x1, y1, z1, x2, y2, z2, block_type, **options):
